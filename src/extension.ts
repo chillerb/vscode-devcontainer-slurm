@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { addConfigFile } from './addConfig';
+import { installConfiguredExtensions } from './containerWindow';
 import { Registry } from './registry';
 import { reportErrors, Sessions } from './session';
 
@@ -19,6 +20,12 @@ export function activate(context: vscode.ExtensionContext) {
 		command('remove', () => sessions.removeCommand()),
 		command('showLog', () => sessions.showLogCommand()),
 	);
+
+	const entry = sessions.currentEntry();
+	if (entry) {
+		log.info(`connected to ${entry.name} on ${entry.cluster} (job ${entry.lastJobId ?? 'unknown'})`);
+		void reportErrors(log, () => installConfiguredExtensions(entry, log));
+	}
 }
 
 export function deactivate() {}

@@ -10,7 +10,6 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 ## Planned (MVP)
 
-- [ ] Container-window behaviour: install `customizations.vscode.extensions`; Stop from inside the container
 - [ ] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
 - [ ] Manual end-to-end test on a real Slurm cluster (needs the user)
 
@@ -26,6 +25,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] `remote.ts`: run scripts on the login node through `ssh -o BatchMode=yes` with streamed output and cancellation
 - [x] `registry.ts`: local list of known devcontainers (`globalState`) + tests
 - [x] `session.ts` + commands: Open, Add, Connect, Stop, Remove, Show Job Log
+- [x] Container-window behaviour: install `customizations.vscode.extensions`; Stop from inside the container
 
 ## Future
 
