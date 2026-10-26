@@ -12,7 +12,7 @@ suite('remote', () => {
 		tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sdc-remote-'));
 		fakeSsh = path.join(tmp, 'ssh');
 		// Ignores the ssh options and runs the script locally; the host "down" simulates a connection failure.
-		fs.writeFileSync(fakeSsh, '#!/bin/bash\nfor a in "$@"; do [ "$a" = down ] && { echo "ssh: connect to host down: refused" >&2; exit 255; }; done\nexec bash -s\n', { mode: 0o755 });
+		fs.writeFileSync(fakeSsh, '#!/bin/bash\nfor a in "$@"; do [ "$a" = down ] && { echo "ssh: connect to host down: refused" >&2; exit 255; }; done\nSSH_ARGS="$*" exec bash -s\n', { mode: 0o755 });
 	});
 
 	teardown(() => fs.rmSync(tmp, { recursive: true, force: true }));
@@ -25,6 +25,11 @@ suite('remote', () => {
 		assert.strictEqual(result.code, 0);
 		assert.deepStrictEqual(seen, ['a:1', 'b:x=y', 'c:last']);
 		assert.strictEqual(lastValue(result, 'b'), 'x=y');
+	});
+
+	test('passes batch mode and keepalive options to ssh', async () => {
+		const result = await runOnCluster('cluster', 'printf "@@sdc:args=%s\\n" "$SSH_ARGS"', { sshPath: fakeSsh });
+		assert.strictEqual(lastValue(result, 'args'), '-T -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=4 cluster bash -l -s');
 	});
 
 	test('turns failures into readable errors', async () => {

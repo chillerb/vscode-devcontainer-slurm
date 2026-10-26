@@ -23,12 +23,23 @@ export class RemoteError extends Error {
 }
 
 /**
- * Pipes a generated script into a login shell on the cluster via the local ssh client. BatchMode makes ssh fail
- * instead of waiting for a password prompt nobody can answer.
+ * BatchMode: fail instead of waiting for a password prompt nobody can answer. Keepalives: waiting for a pending
+ * job can keep the connection silent for a long time, which idle timeouts in firewalls/NAT would cut.
+ */
+export const SSH_OPTIONS = [
+	'-T',
+	'-o', 'BatchMode=yes',
+	'-o', 'ConnectTimeout=30',
+	'-o', 'ServerAliveInterval=30',
+	'-o', 'ServerAliveCountMax=4',
+];
+
+/**
+ * Pipes a generated script into a login shell on the cluster via the local ssh client.
  */
 export function runOnCluster(cluster: string, script: string, opts: RunOptions): Promise<RunResult> {
 	return new Promise((resolve, reject) => {
-		const child = spawn(opts.sshPath, ['-T', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=30', cluster, 'bash -l -s'], {
+		const child = spawn(opts.sshPath, [...SSH_OPTIONS, cluster, 'bash -l -s'], {
 			stdio: ['pipe', 'pipe', 'pipe'],
 			signal: opts.signal,
 		});
