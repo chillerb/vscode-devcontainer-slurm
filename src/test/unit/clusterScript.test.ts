@@ -255,30 +255,31 @@ echo RUNNING
 		assert.ok(lines.some(([k, v]) => k === 'log' && v === 'boom'));
 	});
 
-	test('job mounts a persistent home only when configured', async () => {
-		const withHome = (apptainer: object) => ({
+	test('job passes a persistent workdir only when configured', async () => {
+		const withWorkdir = (apptainer: object) => ({
 			...ctx,
-			config: { ...ctx.config, apptainer: { ...ctx.config.apptainer, persistentHome: true, ...apptainer } },
+			config: { ...ctx.config, apptainer: { ...ctx.config.apptainer, persistentWorkdir: true, ...apptainer } },
 		});
-		assert.doesNotMatch(jobScript(ctx, sshdStrategy), /--home/);
-		assert.match(jobScript(withHome({ persistentHomePath: '~/c/p' }), sshdStrategy), /^homedir="\$HOME"\/'c\/p'$/m);
-		assert.match(jobScript(withHome({ persistentHomePath: '/abs/p' }), sshdStrategy), /^homedir='\/abs\/p'$/m);
+		assert.doesNotMatch(jobScript(ctx, sshdStrategy), /--workdir/);
+		assert.match(jobScript(withWorkdir({ persistentWorkdirPath: '~/c/p' }), sshdStrategy), /^workdir="\$HOME"\/'c\/p'$/m);
+		assert.match(jobScript(withWorkdir({ persistentWorkdirPath: '/abs/p' }), sshdStrategy), /^workdir='\/abs\/p'$/m);
 
 		// Run the default case against the fake apptainer and sshd.
 		const jobFile = path.join(tmp, 'job.sh');
 		fs.mkdirSync(ctx.sessionDir, { recursive: true });
-		fs.writeFileSync(jobFile, jobScript(withHome({}), sshdStrategy));
-		const homedir = path.join(ctx.baseDir, 'home', ctx.session);
+		fs.writeFileSync(jobFile, jobScript(withWorkdir({}), sshdStrategy));
+		const workdir = path.join(ctx.baseDir, 'work', ctx.session);
 		let job: ChildProcess | undefined;
 		try {
 			job = spawn('bash', [jobFile], { env: { ...process.env, HOME: home, SLURM_JOB_ID: '9' }, stdio: 'ignore' });
 			await waitFor(() => fs.existsSync(path.join(ctx.sessionDir, 'connection')), 10000);
-			assert.strictEqual(fs.statSync(homedir).mode & 0o777, 0o700);
+			assert.strictEqual(fs.statSync(workdir).mode & 0o777, 0o700);
 			const started = fs.readFileSync(path.join(home, 'apptainer.log'), 'utf8').split('\n');
-			assert.deepStrictEqual(started.slice(0, 5), ['instance', 'start', '--nv', '--home', `${homedir}:${home}`]);
+			assert.deepStrictEqual(started.slice(0, 5), ['instance', 'start', '--nv', '--workdir', workdir]);
 			const exited = new Promise(resolve => job!.on('exit', resolve));
 			job.kill('SIGTERM');
 			await exited;
+			assert.ok(fs.existsSync(workdir), 'the workdir is kept after the job');
 		} finally {
 			job?.kill('SIGKILL');
 		}

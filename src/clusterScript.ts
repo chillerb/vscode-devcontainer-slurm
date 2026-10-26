@@ -235,11 +235,11 @@ export function sbatchDirectives(jobName: string, logFile: string, config: Devco
 	return opts.map(o => `#SBATCH ${o}`);
 }
 
-/** Shell expression for the persistent container home: the configured path or `<state dir>/home/<session>`. */
-function persistentHomeDir(ctx: JobContext): string {
-	const configured = ctx.config.apptainer.persistentHomePath;
+/** Shell expression for the persistent workdir: the configured path or `<state dir>/work/<session>`. */
+function persistentWorkdir(ctx: JobContext): string {
+	const configured = ctx.config.apptainer.persistentWorkdirPath;
 	if (configured === undefined) {
-		return shellQuote(`${ctx.baseDir}/home/${ctx.session}`);
+		return shellQuote(`${ctx.baseDir}/work/${ctx.session}`);
 	}
 	return configured.startsWith('~/') ? `"$HOME"/${shellQuote(configured.slice(2))}` : shellQuote(configured);
 }
@@ -251,9 +251,9 @@ export function jobScript(ctx: JobContext, strategy: ConnectionStrategy): string
 		`${ctx.projectPath}:${config.workspaceFolder}`,
 		...config.mounts.map(m => `${m.source}:${m.target}${m.readonly ? ':ro' : ''}`),
 	].flatMap(b => ['--bind', shellQuote(b)]);
-	const home = config.apptainer.persistentHome ? persistentHomeDir(ctx) : undefined;
+	const workdir = config.apptainer.persistentWorkdir ? persistentWorkdir(ctx) : undefined;
 	const startArgs = [
-		...config.apptainer.runArgs.map(shellQuote), ...(home ? ['--home', '"$homedir:$HOME"'] : []),
+		...config.apptainer.runArgs.map(shellQuote), ...(workdir ? ['--workdir', '"$workdir"'] : []),
 		...binds, shellQuote(config.image), '"$instance"',
 	];
 	const modules = config.apptainer.modules.length === 0 ? '' : `if ! command -v module >/dev/null 2>&1; then
@@ -270,7 +270,7 @@ set -uo pipefail
 sdir=${shellQuote(ctx.sessionDir)}
 apptainer=${shellQuote(config.apptainer.binary)}
 instance="${PREFIX}-$SLURM_JOB_ID"
-${home ? `homedir=${home}\nmkdir -p "$homedir" && chmod 700 "$homedir"\n` : ''}log() { echo "[${PREFIX}] $*"; }
+${workdir ? `workdir=${workdir}\nmkdir -p "$workdir" && chmod 700 "$workdir"\n` : ''}log() { echo "[${PREFIX}] $*"; }
 publish_connection() {
 	{
 		echo "job=$SLURM_JOB_ID"

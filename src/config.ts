@@ -21,10 +21,13 @@ export interface ApptainerOptions {
 	binary: string;
 	modules: string[];
 	runArgs: string[];
-	/** Mount a persistent directory as the container's home instead of the real home (`--home`). */
-	persistentHome: boolean;
+	/**
+	 * Pass a persistent `--workdir`. With `--contain(all)`, Apptainer keeps the container's `/tmp`, `/var/tmp`
+	 * and home there instead of on a tiny tmpfs, so the VS Code server can be downloaded and survives jobs.
+	 */
+	persistentWorkdir: boolean;
 	/** Absolute or `~/` path of that directory; defaults to a folder per project in the cluster state directory. */
-	persistentHomePath?: string;
+	persistentWorkdirPath?: string;
 }
 
 export interface ConnectionOptions {
@@ -112,15 +115,25 @@ export function parseConfig(text: string, vars: ConfigVariables): DevcontainerCo
 		throw new ConfigError(`${CONFIG_FILE}: "slurm.gpus" must be a number or string`);
 	}
 
-	const persistentHome = optBoolean(apptainer, 'persistentHome', 'apptainer.persistentHome') ?? false;
-	const persistentHomePath = mapOptional(optString(apptainer, 'persistentHomePath', 'apptainer.persistentHomePath'), subst);
-	if (persistentHomePath !== undefined) {
-		if (!persistentHome) {
-			throw new ConfigError(`${CONFIG_FILE}: "apptainer.persistentHomePath" requires "apptainer.persistentHome": true`);
+	for (const key of ['persistentHome', 'persistentHomePath']) {
+		if (key in apptainer) {
+			throw new ConfigError(`${CONFIG_FILE}: "apptainer.${key}" was replaced by "apptainer.persistentWorkdir"${key === 'persistentHomePath' ? ' and "apptainer.persistentWorkdirPath"' : ''}`);
 		}
-		if (!persistentHomePath.startsWith('/') && !persistentHomePath.startsWith('~/')) {
-			throw new ConfigError(`${CONFIG_FILE}: "apptainer.persistentHomePath" must be an absolute path or start with ~/`);
+	}
+	const runArgs = optStringArray(apptainer, 'runArgs', 'apptainer.runArgs').map(subst);
+	const persistentWorkdir = optBoolean(apptainer, 'persistentWorkdir', 'apptainer.persistentWorkdir') ?? false;
+	const persistentWorkdirPath = mapOptional(optString(apptainer, 'persistentWorkdirPath', 'apptainer.persistentWorkdirPath'), subst);
+	if (persistentWorkdirPath !== undefined) {
+		if (!persistentWorkdir) {
+			throw new ConfigError(`${CONFIG_FILE}: "apptainer.persistentWorkdirPath" requires "apptainer.persistentWorkdir": true`);
 		}
+		if (!persistentWorkdirPath.startsWith('/') && !persistentWorkdirPath.startsWith('~/')) {
+			throw new ConfigError(`${CONFIG_FILE}: "apptainer.persistentWorkdirPath" must be an absolute path or start with ~/`);
+		}
+	}
+	if (persistentWorkdir && runArgs.some(arg => arg === '--workdir' || arg === '-W' || arg.startsWith('--workdir='))) {
+		throw new ConfigError(`${CONFIG_FILE}: "apptainer.runArgs" contains --workdir, which conflicts with "apptainer.persistentWorkdir". `
+			+ 'Either set "persistentWorkdir" to false or remove --workdir from "runArgs".');
 	}
 
 	const customizations = optObject(raw, 'customizations') ?? {};
@@ -148,9 +161,9 @@ export function parseConfig(text: string, vars: ConfigVariables): DevcontainerCo
 		apptainer: {
 			binary: optString(apptainer, 'binary', 'apptainer.binary') ?? 'apptainer',
 			modules: optStringArray(apptainer, 'modules', 'apptainer.modules'),
-			runArgs: optStringArray(apptainer, 'runArgs', 'apptainer.runArgs').map(subst),
-			persistentHome,
-			persistentHomePath,
+			runArgs,
+			persistentWorkdir,
+			persistentWorkdirPath,
 		},
 		connection: {
 			type: 'sshd',
@@ -349,13 +362,14 @@ export function configTemplate(name: string): string {
 		// Extra arguments for "apptainer instance start", e.g. ["--nv"] for NVIDIA GPUs,
 		// or ["--containall"] to isolate the container from your home directory and the host.
 		"runArgs": [],
-		// Use a persistent directory as the container's home instead of your real home directory.
-		// Needed with "--contain"/"--containall": otherwise the container's home is a tiny temporary
-		// filesystem (64 MiB by default), too small for the VS Code server and lost after every job.
-		// With a persistent home, the VS Code server and extensions are downloaded only once.
-		"persistentHome": false
-		// Optional location; default: ~/.slurm-devcontainer/home/<project> on the cluster.
-		// "persistentHomePath": "~/containers/\${localWorkspaceFolderBasename}"
+		// Keep the container's /tmp, /var/tmp and home in a persistent directory on disk (apptainer --workdir).
+		// Needed with "--contain"/"--containall": otherwise they live on a tiny temporary filesystem
+		// (64 MiB by default), too small for the VS Code server and lost after every job. With a persistent
+		// workdir, the VS Code server and extensions are downloaded only once. It has no effect without
+		// "--contain"/"--containall". Set it to false if you pass your own --workdir in "runArgs".
+		"persistentWorkdir": false
+		// Optional location; default: ~/.slurm-devcontainer/work/<project> on the cluster.
+		// "persistentWorkdirPath": "~/containers/\${localWorkspaceFolderBasename}"
 	}
 }
 `;

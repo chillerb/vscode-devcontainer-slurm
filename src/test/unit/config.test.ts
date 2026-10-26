@@ -14,7 +14,7 @@ suite('config', () => {
 			partition: undefined, time: undefined, cpusPerTask: undefined, mem: undefined, gpus: undefined,
 			account: undefined, qos: undefined, constraint: undefined, sbatchArgs: [],
 		});
-		assert.deepStrictEqual(config.apptainer, { binary: 'apptainer', modules: [], runArgs: [], persistentHome: false, persistentHomePath: undefined });
+		assert.deepStrictEqual(config.apptainer, { binary: 'apptainer', modules: [], runArgs: [], persistentWorkdir: false, persistentWorkdirPath: undefined });
 		assert.deepStrictEqual(config.connection, { type: 'sshd', sshdPath: '/usr/sbin/sshd' });
 	});
 
@@ -46,16 +46,31 @@ suite('config', () => {
 		assert.deepStrictEqual(config.apptainer.runArgs, ['--nv']);
 	});
 
-	test('parses the persistent home options', () => {
+	test('parses the persistent workdir options', () => {
 		const apptainer = (options: object) => parseConfig(JSON.stringify({ image: 'x', apptainer: options }), vars).apptainer;
-		assert.strictEqual(apptainer({ persistentHome: true }).persistentHome, true);
-		assert.strictEqual(apptainer({ persistentHome: true }).persistentHomePath, undefined);
-		assert.strictEqual(apptainer({ persistentHome: true, persistentHomePath: '~/c/${localWorkspaceFolderBasename}' }).persistentHomePath, '~/c/my-project');
-		assert.strictEqual(apptainer({ persistentHome: true, persistentHomePath: '/scratch/${localEnv:USER}/home' }).persistentHomePath, '/scratch/jdoe/home');
-		assert.throws(() => apptainer({ persistentHomePath: '/x' }), /requires "apptainer.persistentHome": true/);
-		assert.throws(() => apptainer({ persistentHome: true, persistentHomePath: 'rel/x' }), /absolute path or start with ~\//);
-		assert.throws(() => apptainer({ persistentHome: 'yes' }), /must be true or false/);
+		assert.strictEqual(apptainer({ persistentWorkdir: true }).persistentWorkdir, true);
+		assert.strictEqual(apptainer({ persistentWorkdir: true }).persistentWorkdirPath, undefined);
+		assert.strictEqual(apptainer({ persistentWorkdir: true, persistentWorkdirPath: '~/c/${localWorkspaceFolderBasename}' }).persistentWorkdirPath, '~/c/my-project');
+		assert.strictEqual(apptainer({ persistentWorkdir: true, persistentWorkdirPath: '/scratch/${localEnv:USER}/w' }).persistentWorkdirPath, '/scratch/jdoe/w');
+		assert.throws(() => apptainer({ persistentWorkdirPath: '/x' }), /requires "apptainer.persistentWorkdir": true/);
+		assert.throws(() => apptainer({ persistentWorkdir: true, persistentWorkdirPath: 'rel/x' }), /absolute path or start with ~\//);
+		assert.throws(() => apptainer({ persistentWorkdir: 'yes' }), /must be true or false/);
 	});
+
+	test('rejects a --workdir in runArgs together with persistentWorkdir', () => {
+		const apptainer = (options: object) => parseConfig(JSON.stringify({ image: 'x', apptainer: options }), vars).apptainer;
+		for (const runArgs of [['--workdir', '/w'], ['--workdir=/w'], ['-W', '/w']]) {
+			assert.throws(() => apptainer({ persistentWorkdir: true, runArgs }), /conflicts with "apptainer.persistentWorkdir"/, runArgs.join(' '));
+			assert.deepStrictEqual(apptainer({ persistentWorkdir: false, runArgs }).runArgs, runArgs);
+		}
+	});
+
+	test('points users of the 0.2.0 persistentHome option to its replacement', () => {
+		const apptainer = (options: object) => parseConfig(JSON.stringify({ image: 'x', apptainer: options }), vars).apptainer;
+		assert.throws(() => apptainer({ persistentHome: true }), /"apptainer.persistentHome" was replaced by "apptainer.persistentWorkdir"/);
+		assert.throws(() => apptainer({ persistentHomePath: '/x' }), /replaced by .*"apptainer.persistentWorkdirPath"/);
+	});
+
 
 	test('rejects invalid configs', () => {
 		assert.throws(() => parseConfig('{', vars), ConfigError);

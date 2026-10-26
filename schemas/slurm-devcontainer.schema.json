@@ -100,14 +100,14 @@
 					"items": { "type": "string" },
 					"description": "Extra arguments for \"apptainer instance start\", e.g. [\"--nv\"] or [\"--containall\"]."
 				},
-				"persistentHome": {
+				"persistentWorkdir": {
 					"type": "boolean",
 					"default": false,
-					"description": "Mount a persistent directory as the container's home instead of your real home (apptainer --home). Needed with --contain/--containall, where the default home is a tiny temporary filesystem lost after every job."
+					"description": "Pass a persistent apptainer --workdir. With --contain/--containall, the container's /tmp, /var/tmp and home live there on disk instead of on a tiny temporary filesystem, so the VS Code server can be downloaded and is kept across jobs. No effect without --contain/--containall; conflicts with --workdir in runArgs."
 				},
-				"persistentHomePath": {
+				"persistentWorkdirPath": {
 					"type": "string",
-					"description": "Location of the persistent home on the cluster (absolute or ~/...). Default: ~/.slurm-devcontainer/home/<project>. Requires persistentHome: true."
+					"description": "Location of the persistent workdir on the cluster (absolute or ~/...). Default: ~/.slurm-devcontainer/work/<project>. Requires persistentWorkdir: true."
 				}
 			}
 		},
