@@ -78,7 +78,7 @@ printf 'ARG:%s\\n' "$@"
 			jobScript(ctx, sshdStrategy),
 			sshdStrategy.sessionFiles(ctx)['enter.sh'].content,
 			stopScript(ctx.jobName),
-			logScript(ctx.sessionDir),
+			logScript(ctx.session),
 		];
 		for (const script of scripts) {
 			const result = bash(script, {}, ['-n']);

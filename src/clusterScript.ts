@@ -146,8 +146,8 @@ fi`);
 }
 
 /** Prints the job log of a session. */
-export function logScript(sessionDir: string): string {
-	return wrap(`f=${shellQuote(`${sessionDir}/job.log`)}
+export function logScript(session: string): string {
+	return wrap(`f="$HOME/${STATE_DIR}/sessions/"${shellQuote(session)}/job.log
 if [ -r "$f" ]; then
 	sed 's/^/${MARKER}log=/' "$f"
 else

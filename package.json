@@ -63,11 +63,53 @@
     },
     "commands": [
       {
+        "command": "slurmDevcontainer.open",
+        "title": "Open Folder in Container",
+        "category": "Slurm Dev Container"
+      },
+      {
+        "command": "slurmDevcontainer.connect",
+        "title": "Connect to Container...",
+        "category": "Slurm Dev Container"
+      },
+      {
+        "command": "slurmDevcontainer.add",
+        "title": "Add Container...",
+        "category": "Slurm Dev Container"
+      },
+      {
+        "command": "slurmDevcontainer.stop",
+        "title": "Stop Container Job...",
+        "category": "Slurm Dev Container"
+      },
+      {
+        "command": "slurmDevcontainer.remove",
+        "title": "Remove Container from List...",
+        "category": "Slurm Dev Container"
+      },
+      {
+        "command": "slurmDevcontainer.showLog",
+        "title": "Show Job Log...",
+        "category": "Slurm Dev Container"
+      },
+      {
         "command": "slurmDevcontainer.addConfig",
         "title": "Add Configuration File...",
         "category": "Slurm Dev Container"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "slurmDevcontainer.open",
+          "when": "remoteName == ssh-remote"
+        },
+        {
+          "command": "slurmDevcontainer.addConfig",
+          "when": "workspaceFolderCount > 0"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
