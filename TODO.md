@@ -10,7 +10,9 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 ## Planned (MVP)
 
-- [ ] Manual end-to-end test on a real Slurm cluster (needs the user)
+- [ ] Manual end-to-end test on a real Slurm cluster (needs the user): F5, Open Folder in Container, reconnect from a local window, Stop
+- [ ] Integration tests (`npm test`): the template test is still a placeholder. The runner cannot unpack VS Code in this devcontainer, and it must install Remote-SSH because of `extensionDependencies`
+- [ ] Packaging: add `publisher`, `repository`, `license` and an icon to `package.json`; check `vsce package`
 
 ## Done
 
@@ -28,6 +30,8 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
 
 ## Future
+
+- Tell the user when a cancelled connect leaves a pending job in the queue (offer Stop)
 
 - Sidebar tree view of known devcontainers (job state, Connect/Stop buttons)
 - Askpass integration (VS Code input boxes) for password/2FA logins
