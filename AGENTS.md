@@ -19,6 +19,7 @@ Here is an example for the vision of the user's perspective:
 
 - keep it simple, if possible
 - key functionality: simple way to start devcontainer sessions in slurm
+- follow best-practices for vscode extensions as recommended in the tutorials here: https://code.visualstudio.com/api
 
 ## TODO
 
