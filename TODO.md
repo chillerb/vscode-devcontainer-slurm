@@ -10,7 +10,6 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 ## Planned (MVP)
 
-- [ ] `sshConfig.ts`: Host block upsert/remove, Include detection/insertion, key generation, known_hosts pinning + tests
 - [ ] `remote.ts`: run scripts on the login node through `ssh -o BatchMode=yes` with streamed output and cancellation
 - [ ] `registry.ts`: local list of known devcontainers (`globalState`) + tests
 - [ ] `session.ts` + commands: Open, Add, Connect, Stop, Remove, Show Job Log
@@ -26,6 +25,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] Command "Add Slurm Dev Container Configuration" (writes a template)
 - [x] `connection/`: `ConnectionStrategy` interface + `sshd` strategy
 - [x] `clusterScript.ts`: generate the connect script, `job.sh`, `sshd_config` and `enter.sh` + tests (`bash -n`)
+- [x] `sshConfig.ts`: Host block upsert/remove, Include detection/insertion, key generation, known_hosts pinning + tests
 
 ## Future
 
