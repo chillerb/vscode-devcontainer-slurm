@@ -28,7 +28,7 @@ export interface StateStore {
 	update(key: string, value: unknown): Thenable<void>;
 }
 
-const KEY = 'slurmDevcontainer.entries';
+const KEY = 'remoteSlurmContainers.entries';
 
 /** Extensions from the config that have not been installed into the container yet. */
 export function extensionsToInstall(entry: Entry): string[] {

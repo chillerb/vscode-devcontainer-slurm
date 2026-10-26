@@ -4,7 +4,7 @@
 
 - the devcontainer vscode extension is very useful for developing in sandboxed, isolated environments
 - unfortunately, the devcontainer extension does not support slurm and apptainer
-- goal of this project: a vscode extension `slurm-devcontainer` (formerly `vscode-devcontainer-slurm`), which provides some of the functionality for slurm environments
+- goal of this project: a vscode extension `remote-slurm-containers` (display name "Slurm Dev Containers"; formerly `slurm-devcontainer` and `vscode-devcontainer-slurm`), which provides some of the functionality for slurm environments
 
 ## Users Perspective
 

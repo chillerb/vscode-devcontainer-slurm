@@ -14,7 +14,7 @@ export const INCLUDE_TARGET = `${OWN_DIR}/config`;
 export const IDENTITY_FILE = `${OWN_DIR}/id_ed25519`;
 export const KNOWN_HOSTS_FILE = `${OWN_DIR}/known_hosts`;
 
-const HEADER = '# Managed by the Slurm Dev Container extension. Manual changes are overwritten.\n';
+const HEADER = '# Managed by the Slurm Dev Containers extension. Manual changes are overwritten.\n';
 
 /** Expands a leading `~/` to the local home directory. */
 export function expandHome(p: string, home = os.homedir()): string {
@@ -83,7 +83,7 @@ export function hasInclude(text: string, home = os.homedir()): boolean {
  * apply inside that block.
  */
 export function addInclude(text: string): string {
-	return `# Added by the Slurm Dev Container extension (VS Code)\nInclude ${INCLUDE_TARGET}\n\n${text}`;
+	return `# Added by the Slurm Dev Containers extension (VS Code)\nInclude ${INCLUDE_TARGET}\n\n${text}`;
 }
 
 /** Concrete host aliases (no wildcards, not ours) defined in an ssh config, for picking a login node. */

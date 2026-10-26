@@ -18,7 +18,7 @@ export class Sessions {
 	constructor(private readonly registry: Registry, private readonly log: vscode.LogOutputChannel) { }
 
 	private get settings() {
-		const c = vscode.workspace.getConfiguration('slurmDevcontainer');
+		const c = vscode.workspace.getConfiguration('remoteSlurmContainers');
 		return {
 			sshPath: c.get<string>('sshPath') || 'ssh',
 			openInNewWindow: c.get<boolean>('openInNewWindow', true),
@@ -64,7 +64,7 @@ export class Sessions {
 		vscode.window.showErrorMessage(
 			'Open the project folder on the cluster login node with Remote-SSH first, or use "Connect to Container..." to pick a known one.',
 			'Connect to Container...',
-		).then(choice => choice && vscode.commands.executeCommand('slurmDevcontainer.connect'));
+		).then(choice => choice && vscode.commands.executeCommand('remoteSlurmContainers.connect'));
 	}
 
 	/** "Add Container...": registers a project by login host and path, from any window. */
@@ -259,7 +259,7 @@ export class Sessions {
 		const get = (key: string) => lastValue(probe, key);
 		const missing = get('config-missing');
 		if (missing !== undefined) {
-			throw new ConfigError(`No configuration found at ${missing}. Open the project on ${entry.cluster} and run "Slurm Dev Container: Add Configuration File...".`);
+			throw new ConfigError(`No configuration found at ${missing}. Open the project on ${entry.cluster} and run "Slurm Dev Containers: Add Configuration File...".`);
 		}
 		const env: Record<string, string> = {};
 		for (const pair of Buffer.from(get('env') ?? '', 'base64').toString('utf8').split('\0')) {
@@ -283,7 +283,7 @@ export class Sessions {
 		const copy = 'Copy Line';
 		const choice = await vscode.window.showInformationMessage('One-time SSH setup', {
 			modal: true,
-			detail: `Slurm Dev Container keeps the SSH host entries of your containers in ${INCLUDE_TARGET} and never edits other SSH files on its own. `
+			detail: `Slurm Dev Containers keeps the SSH host entries of your containers in ${INCLUDE_TARGET} and never edits other SSH files on its own. `
 				+ `For Remote-SSH to find these entries, ${path.join('~', '.ssh', 'config')} on this computer needs this line at the top:\n\n${line}\n\n`
 				+ 'Add it for you now, or copy it and add it yourself?',
 		}, add, copy);

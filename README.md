@@ -1,4 +1,4 @@
-# Slurm Dev Container
+# Slurm Dev Containers
 
 Develop inside [Apptainer](https://apptainer.org/) containers that run as [Slurm](https://slurm.schedmd.com/) jobs on HPC clusters, similar to the [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) extension, which needs Docker.
 
@@ -44,11 +44,11 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 ## Getting started
 
 1. Connect VS Code to the cluster login node with Remote-SSH and open your project folder.
-2. Run **Slurm Dev Container: Add Configuration File...** and adjust the image and resources.
-3. Run **Slurm Dev Container: Open Folder in Container**.
+2. Run **Slurm Dev Containers: Add Configuration File...** and adjust the image and resources.
+3. Run **Slurm Dev Containers: Open Folder in Container**.
    - The first time, the extension asks whether it may add one line to `~/.ssh/config` on your computer (see [Files](#files-written-by-the-extension)). You can also copy the line and add it yourself.
    - A notification shows the job state while the job is pending. When it is running, a new window opens inside the container.
-4. Later, run **Slurm Dev Container: Connect to Container...** from any window, even without a connection to the cluster. It reconnects to the running job or starts a new one.
+4. Later, run **Slurm Dev Containers: Connect to Container...** from any window, even without a connection to the cluster. It reconnects to the running job or starts a new one.
 
 ## Configuration
 
@@ -98,9 +98,9 @@ The project folder and your home directory are available inside the container (A
 
 | Setting | Default | Description |
 |---|---|---|
-| `slurmDevcontainer.sshPath` | `ssh` | Local ssh executable. |
-| `slurmDevcontainer.openInNewWindow` | `true` | Open containers in a new window. |
-| `slurmDevcontainer.connectTimeoutMinutes` | `30` | How long to wait for a pending job. The job keeps waiting in the queue after a timeout. |
+| `remoteSlurmContainers.sshPath` | `ssh` | Local ssh executable. |
+| `remoteSlurmContainers.openInNewWindow` | `true` | Open containers in a new window. |
+| `remoteSlurmContainers.connectTimeoutMinutes` | `30` | How long to wait for a pending job. The job keeps waiting in the queue after a timeout. |
 
 ## Files written by the extension
 
@@ -136,7 +136,7 @@ Log in once in a terminal (`ssh my-cluster`). Afterwards the extension and Remot
 - **Connection times out after the job started.** The login node probably cannot reach the compute node's port. Ask your admins whether login→compute connections on high ports are allowed.
 - **Remote-SSH asks for the platform of the host.** Choose "Linux".
 - **Extensions fail to install in the container.** Compute nodes often have no internet access. Set `"remote.downloadExtensionsLocally": true` so VS Code downloads extensions on your computer and uploads them.
-- The extension's output channel is **Output → Slurm Dev Container**, and it contains the details of every step.
+- The extension's output channel is **Output → Slurm Dev Containers**, and it contains the details of every step.
 
 ## Development
 

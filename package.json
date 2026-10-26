@@ -1,6 +1,6 @@
 {
-  "name": "slurm-devcontainer",
-  "displayName": "Slurm Dev Container",
+  "name": "remote-slurm-containers",
+  "displayName": "Slurm Dev Containers",
   "description": "Develop inside Apptainer containers running as Slurm jobs on HPC clusters, similar to Dev Containers.",
   "version": "0.1.0",
   "publisher": "chillerb",
@@ -55,19 +55,19 @@
       }
     ],
     "configuration": {
-      "title": "Slurm Dev Container",
+      "title": "Slurm Dev Containers",
       "properties": {
-        "slurmDevcontainer.sshPath": {
+        "remoteSlurmContainers.sshPath": {
           "type": "string",
           "default": "ssh",
           "description": "Path to the local ssh executable used to run commands on the cluster login node."
         },
-        "slurmDevcontainer.openInNewWindow": {
+        "remoteSlurmContainers.openInNewWindow": {
           "type": "boolean",
           "default": true,
           "description": "Open the container in a new window instead of replacing the current one."
         },
-        "slurmDevcontainer.connectTimeoutMinutes": {
+        "remoteSlurmContainers.connectTimeoutMinutes": {
           "type": "number",
           "default": 30,
           "minimum": 1,
@@ -77,49 +77,49 @@
     },
     "commands": [
       {
-        "command": "slurmDevcontainer.open",
+        "command": "remoteSlurmContainers.open",
         "title": "Open Folder in Container",
-        "category": "Slurm Dev Container"
+        "category": "Slurm Dev Containers"
       },
       {
-        "command": "slurmDevcontainer.connect",
+        "command": "remoteSlurmContainers.connect",
         "title": "Connect to Container...",
-        "category": "Slurm Dev Container"
+        "category": "Slurm Dev Containers"
       },
       {
-        "command": "slurmDevcontainer.add",
+        "command": "remoteSlurmContainers.add",
         "title": "Add Container...",
-        "category": "Slurm Dev Container"
+        "category": "Slurm Dev Containers"
       },
       {
-        "command": "slurmDevcontainer.stop",
+        "command": "remoteSlurmContainers.stop",
         "title": "Stop Container Job...",
-        "category": "Slurm Dev Container"
+        "category": "Slurm Dev Containers"
       },
       {
-        "command": "slurmDevcontainer.remove",
+        "command": "remoteSlurmContainers.remove",
         "title": "Remove Container from List...",
-        "category": "Slurm Dev Container"
+        "category": "Slurm Dev Containers"
       },
       {
-        "command": "slurmDevcontainer.showLog",
+        "command": "remoteSlurmContainers.showLog",
         "title": "Show Job Log...",
-        "category": "Slurm Dev Container"
+        "category": "Slurm Dev Containers"
       },
       {
-        "command": "slurmDevcontainer.addConfig",
+        "command": "remoteSlurmContainers.addConfig",
         "title": "Add Configuration File...",
-        "category": "Slurm Dev Container"
+        "category": "Slurm Dev Containers"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "slurmDevcontainer.open",
+          "command": "remoteSlurmContainers.open",
           "when": "remoteName == ssh-remote"
         },
         {
-          "command": "slurmDevcontainer.addConfig",
+          "command": "remoteSlurmContainers.addConfig",
           "when": "workspaceFolderCount > 0"
         }
       ]

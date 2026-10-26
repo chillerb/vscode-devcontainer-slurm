@@ -5,11 +5,11 @@ import { Registry } from './registry';
 import { reportErrors, Sessions } from './session';
 
 export function activate(context: vscode.ExtensionContext) {
-	const log = vscode.window.createOutputChannel('Slurm Dev Container', { log: true });
+	const log = vscode.window.createOutputChannel('Slurm Dev Containers', { log: true });
 	const registry = new Registry(context.globalState);
 	const sessions = new Sessions(registry, log);
 	const command = (id: string, fn: () => Promise<unknown>) =>
-		vscode.commands.registerCommand(`slurmDevcontainer.${id}`, () => reportErrors(log, fn));
+		vscode.commands.registerCommand(`remoteSlurmContainers.${id}`, () => reportErrors(log, fn));
 
 	context.subscriptions.push(
 		log,

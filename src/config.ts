@@ -275,7 +275,7 @@ function mapValues(obj: Record<string, string>, fn: (s: string) => string): Reco
 
 /** Commented starter configuration written by the "Add Configuration File" command. */
 export function configTemplate(name: string): string {
-	return `// Configuration for the Slurm Dev Container extension.
+	return `// Configuration for the Slurm Dev Containers extension.
 // Format: a subset of devcontainer.json (https://containers.dev) plus "slurm", "apptainer" and "connection".
 {
 	"name": ${JSON.stringify(name)},
