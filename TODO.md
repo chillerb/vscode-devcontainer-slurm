@@ -33,6 +33,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 ## Future
 
+- Optional persistent Apptainer overlay per project (`apptainer overlay create --size <MB> overlay.img`, then `--overlay overlay.img`) as an alternative to `persistentHome`: makes the whole container file system writable and persistent. Caveats: only one container may use an overlay image read-write at a time (fits one job per project), fixed size, needs overlay support on the site (unprivileged: fuse-overlayfs/fuse2fs), and image-owned paths such as `/home/vscode` stay unwritable for the user's UID
 - Tell the user when a cancelled connect leaves a pending job in the queue (offer Stop)
 
 - Sidebar tree view of known devcontainers (job state, Connect/Stop buttons)
