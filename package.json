@@ -60,7 +60,14 @@
           "description": "How long to wait for the Slurm job to start and the container to become ready."
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "command": "slurmDevcontainer.addConfig",
+        "title": "Add Configuration File...",
+        "category": "Slurm Dev Container"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
