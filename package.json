@@ -1,7 +1,7 @@
 {
-  "name": "vscode-devcontainer-slurm",
-  "displayName": "vscode-devcontainer-slurm",
-  "description": "vscode devcontainers running on slurm and apptainer",
+  "name": "slurm-devcontainer",
+  "displayName": "Slurm Dev Container",
+  "description": "Develop inside Apptainer containers running as Slurm jobs on HPC clusters, similar to Dev Containers.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.140.0"
@@ -9,15 +9,44 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "slurm",
+    "apptainer",
+    "singularity",
+    "hpc",
+    "devcontainer",
+    "remote"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "extensionDependencies": [
+    "ms-vscode-remote.remote-ssh"
+  ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "vscode-devcontainer-slurm.helloWorld",
-        "title": "Hello World"
+    "configuration": {
+      "title": "Slurm Dev Container",
+      "properties": {
+        "slurmDevcontainer.sshPath": {
+          "type": "string",
+          "default": "ssh",
+          "description": "Path to the local ssh executable used to run commands on the cluster login node."
+        },
+        "slurmDevcontainer.openInNewWindow": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the container in a new window instead of replacing the current one."
+        },
+        "slurmDevcontainer.connectTimeoutMinutes": {
+          "type": "number",
+          "default": 30,
+          "minimum": 1,
+          "description": "How long to wait for the Slurm job to start and the container to become ready."
+        }
       }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
