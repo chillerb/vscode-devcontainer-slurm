@@ -6,6 +6,12 @@ import { shellQuote, writeFileSnippet } from './shell';
 /** Lines printed by the generated scripts start with this marker; anything else (e.g. motd) is ignored. */
 export const MARKER = '@@sdc:';
 
+/**
+ * Job states that count as "the session has a job". A cancelled job stays visible as COMPLETING for a few
+ * seconds and must not be reused.
+ */
+const ACTIVE_STATES = 'PENDING,CONFIGURING,RUNNING,SUSPENDED';
+
 /** State directory on the cluster, relative to `$HOME`. */
 export const STATE_DIR = `.${PREFIX}`;
 
@@ -93,7 +99,7 @@ if [ -f "$sdir/project" ] && [ "$(cat "$sdir/project")" != "$project" ]; then
 	exit 3
 fi
 printf '%s\\n' "$project" > "$sdir/project"
-if ! jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(ctx.jobName)} -o %i); then
+if ! jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(ctx.jobName)} -t ${ACTIVE_STATES} -o %i); then
 	say "error=squeue failed on the login node"
 	exit 6
 fi
@@ -140,7 +146,7 @@ say "hostkey=$(cat "$base/ssh/host_ed25519.pub")"`);
 /** Cancels the job of a session. */
 export function stopScript(jobName: string): string {
 	return wrap(`set -u
-jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(jobName)} -o %i)
+jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(jobName)} -t ${ACTIVE_STATES} -o %i)
 if [ -z "$jobs" ]; then
 	say "stopped="
 else

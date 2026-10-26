@@ -119,7 +119,11 @@ printf 'ARG:%s\\n' "$@"
 
 	test('launch submits a job and waits for the connection', () => {
 		writeExecutable(path.join(bin, 'squeue'), `#!/bin/bash
-if [[ " $* " == *" -n "* ]]; then cat "$HOME/existing" 2>/dev/null; exit 0; fi
+if [[ " $* " == *" -n "* ]]; then
+	[[ " $* " == *" -t PENDING,CONFIGURING,RUNNING,SUSPENDED "* ]] || { echo "missing state filter" >&2; exit 1; }
+	cat "$HOME/existing" 2>/dev/null
+	exit 0
+fi
 echo RUNNING
 `);
 		writeExecutable(path.join(bin, 'sbatch'), `#!/bin/bash
