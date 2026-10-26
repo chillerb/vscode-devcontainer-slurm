@@ -352,7 +352,7 @@ export function configTemplate(name: string): string {
 		"cpusPerTask": 4,
 		"mem": "16G"
 		// "partition": "gpu",
-		// "gpus": 1,
+		// "gpus": 1,  // also add "--nv" to apptainer.runArgs
 		// "account": "my-project",
 		// "sbatchArgs": ["--qos=normal"]
 	},

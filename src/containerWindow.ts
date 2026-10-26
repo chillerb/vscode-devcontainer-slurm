@@ -20,7 +20,9 @@ export async function installConfiguredExtensions(entry: Entry, registry: Regist
 		for (const id of missing) {
 			progress.report({ message: id });
 			try {
-				await vscode.commands.executeCommand('workbench.extensions.installExtension', id);
+				// Container extensions belong to this container only: don't sync them to the user's other
+				// devices, which also avoids Settings Sync asking "install on all devices?" for each one.
+				await vscode.commands.executeCommand('workbench.extensions.installExtension', id, { donotSync: true });
 				installed.push(id);
 				log.info(`installed ${id}`);
 			} catch (e) {

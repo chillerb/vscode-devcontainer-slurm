@@ -75,7 +75,7 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 | `mounts` | Extra bind mounts: `"source=…,target=…[,readonly]"` or `{ "source", "target", "readonly" }`. |
 | `customizations.vscode.extensions` | Extensions installed when the container window opens. Each one is installed once; extensions added to the list later are installed on the next connect. |
 | `slurm` | `partition`, `time`, `cpusPerTask`, `mem`, `gpus`, `account`, `qos`, `constraint`, plus `sbatchArgs` for anything else (e.g. `["--gres=gpu:a100:1"]`). |
-| `apptainer` | `binary` (default `apptainer`; use `singularity` on older systems), `modules` to `module load` first, `runArgs` for `apptainer instance start` (default `["--containall"]`; keep it when adding flags such as `--nv`), `persistentWorkdir` (default `true`) and `persistentWorkdirPath` for the container's persistent `/tmp` and home (see [Isolation](#isolation)). |
+| `apptainer` | `binary` (default `apptainer`; use `singularity` on older systems), `modules` to `module load` first, `runArgs` for `apptainer instance start` (default `["--containall"]`; keep it when adding flags, e.g. `["--containall", "--nv"]` for NVIDIA GPUs), `persistentWorkdir` (default `true`) and `persistentWorkdirPath` for the container's persistent `/tmp` and home (see [Isolation](#isolation)). |
 | `connection` | `type` (only `sshd` for now) and `sshdPath` (default `/usr/sbin/sshd`). |
 
 Variables: `${localWorkspaceFolder}` and `${localWorkspaceFolderBasename}` refer to the project folder on the cluster. `${containerWorkspaceFolder}` is the folder inside the container. `${localEnv:VAR}` and `${localEnv:VAR:default}` read your environment on the login node.
@@ -172,6 +172,7 @@ Log in once in a terminal (`ssh my-cluster`). Afterwards the extension and Remot
 - **"Could not resolve hostname slurm-devcontainer-…"**: the `Include` line is missing from `~/.ssh/config` or is not at the top (before any `Host`/`Match` block).
 - **Connection times out after the job started.** The login node probably cannot reach the compute node's port. Ask your admins whether login→compute connections on high ports are allowed.
 - **Remote-SSH asks for the platform of the host.** Choose "Linux".
+- **`nvidia-smi` not found in the container.** GPUs need both `"slurm": { "gpus": 1 }` (or `"sbatchArgs": ["--gres=gpu:1"]` on sites that expect `--gres`) and `--nv` in `apptainer.runArgs`. To check the cluster itself, run `srun -p <gpu-partition> --gpus=1 --pty bash`, then `nvidia-smi` and `apptainer exec --containall --nv docker://ubuntu:24.04 nvidia-smi`.
 - **Extensions fail to install in the container.** Compute nodes often have no internet access. Set `"remote.downloadExtensionsLocally": true` so VS Code downloads extensions on your computer and uploads them.
 - The extension's output channel is **Output → Slurm Dev Containers**, and it contains the details of every step.
 
