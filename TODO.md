@@ -12,7 +12,8 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 - [ ] Manual end-to-end test on a real Slurm cluster (needs the user): F5, Open Folder in Container, reconnect from a local window, Stop
 - [ ] Integration tests (`npm test`): the template test is still a placeholder. The runner cannot unpack VS Code in this devcontainer, and it must install Remote-SSH because of `extensionDependencies`
-- [ ] Packaging: add `publisher`, `repository`, `license` and an icon to `package.json`; check `vsce package`
+- [ ] Add the `VSCE_PAT` and `OVSX_PAT` secrets to the GitHub repository (needs the user; see the header of `.github/workflows/release.yml`)
+- [ ] Before 1 Dec 2026: migrate Marketplace publishing from the global PAT to Entra ID (`azure/login` with GitHub OIDC + `vsce publish --azure-credential`); global Azure DevOps PATs stop working then
 
 ## Done
 
@@ -28,9 +29,11 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] `session.ts` + commands: Open, Add, Connect, Stop, Remove, Show Job Log
 - [x] Container-window behaviour: install `customizations.vscode.extensions`; Stop from inside the container
 - [x] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
+- [x] Packaging: publisher `chillerb`, MIT license, repository links, preview flag, `.vscodeignore`; CI and release workflows (Marketplace + Open VSX)
 
 ## Future
 
+- Claim the Open VSX namespace `chillerb` (otherwise extensions are shown as unverified)
 - Tell the user when a cancelled connect leaves a pending job in the queue (offer Stop)
 
 - Sidebar tree view of known devcontainers (job state, Connect/Stop buttons)

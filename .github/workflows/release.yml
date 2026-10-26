@@ -1,17 +1,28 @@
 name: Release
 
-# Push a tag matching the version in package.json:
-#   git tag v0.1.0 && git push origin v0.1.0
+# Bump "version" in package.json, commit, then push a matching tag:
+#   git tag v0.1.0 && git push origin main v0.1.0
 #
-# Needs two repository secrets: VSCE_PAT (Azure DevOps, scoped to
-# Marketplace > Manage) and OVSX_PAT (open-vsx.org access token). The Open VSX
-# namespace must exist first -- once, by hand:
-#   npx ovsx create-namespace chillerb -p <OVSX_PAT>
+# Needs two repository secrets (Settings > Secrets and variables > Actions, or
+# `gh secret set <NAME>`):
+#   VSCE_PAT  Azure DevOps personal access token: dev.azure.com > User settings >
+#             Personal access tokens > New token, Organization "All accessible
+#             organizations", Scopes: Custom defined > Show all scopes >
+#             Marketplace > Manage. The publisher "chillerb" must exist at
+#             https://marketplace.visualstudio.com/manage.
+#             Global PATs like this one stop working on 1 Dec 2026; publishing
+#             then has to move to Entra ID (vsce publish --azure-credential),
+#             see TODO.md.
+#   OVSX_PAT  open-vsx.org > Settings > Access Tokens. Needs a linked Eclipse
+#             account and the signed Publisher Agreement. The namespace must
+#             exist first -- once, by hand:
+#               npx ovsx create-namespace chillerb -p <OVSX_PAT>
 #
 # The two registries publish in separate jobs on purpose. Neither lets a
 # version be republished, so if they shared a job, one failing would leave the
 # other unretryable: re-running would hit "already exists" on the one that
 # worked. Split, "Re-run failed jobs" retries only the one that failed.
+
 on:
   push:
     tags: ['v*']
@@ -23,6 +34,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # A tag that does not match package.json would publish a different
+      # version than the tag claims.
+      - name: Check that the tag matches the package version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
