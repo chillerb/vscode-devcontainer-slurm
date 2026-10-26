@@ -2,7 +2,7 @@
   "name": "slurm-devcontainer",
   "displayName": "Slurm Dev Container",
   "description": "Develop inside Apptainer containers running as Slurm jobs on HPC clusters, similar to Dev Containers.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "chillerb",
   "license": "MIT",
   "preview": true,
