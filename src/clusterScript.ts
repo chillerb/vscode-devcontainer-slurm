@@ -18,9 +18,13 @@ const SQUEUE_RETRIES = 5;
 /** State directory on the cluster, relative to `$HOME`. */
 export const STATE_DIR = `.${PREFIX}`;
 
+/** Session directory relative to `$HOME`. */
+function sessionPath(session: string): string {
+	return `${STATE_DIR}/sessions/${session}`;
+}
+
 export function clusterPaths(home: string, session: string): { baseDir: string; sessionDir: string } {
-	const baseDir = `${home}/${STATE_DIR}`;
-	return { baseDir, sessionDir: `${baseDir}/sessions/${session}` };
+	return { baseDir: `${home}/${STATE_DIR}`, sessionDir: `${home}/${sessionPath(session)}` };
 }
 
 /** Parses `@@sdc:key=value` lines. */
@@ -198,7 +202,7 @@ say "stopped=$(echo $jobs)"`);
 
 /** Prints the job log of a session. */
 export function logScript(session: string): string {
-	return wrap(`f="$HOME/${STATE_DIR}/sessions/"${shellQuote(session)}/job.log
+	return wrap(`f="$HOME"/${shellQuote(`${sessionPath(session)}/job.log`)}
 if [ -r "$f" ]; then
 	sed 's/^/${MARKER}log=/' "$f"
 else

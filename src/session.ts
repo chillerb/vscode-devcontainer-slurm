@@ -6,7 +6,7 @@ import { ConfigError, DevcontainerConfig, parseConfig } from './config';
 import { sshdStrategy } from './connection/sshd';
 import { jobName, PREFIX } from './naming';
 import { Entry, Registry } from './registry';
-import { checkResult, lastValue, RemoteError, runOnCluster } from './remote';
+import { checkResult, lastValue, RemoteError, RunResult, runOnCluster } from './remote';
 import { IDENTITY_FILE, INCLUDE_TARGET, KNOWN_HOSTS_FILE, LocalSsh } from './sshConfig';
 
 const POLL_SECONDS = 5;
@@ -216,7 +216,7 @@ export class Sessions {
 			progress.report({ message: 'Reading configuration...' });
 			const authorizedKey = await ssh.ensureKey();
 			const probe = await run(probeScript(entry.projectPath));
-			const config = this.parseProbedConfig(entry, probe.values);
+			const config = this.parseProbedConfig(entry, probe);
 			const home = lastValue(probe, 'home')!;
 			const ctx = {
 				session: entry.session, jobName: jobName(entry.session), projectPath: entry.projectPath, config,
@@ -255,8 +255,8 @@ export class Sessions {
 		await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: settings.openInNewWindow });
 	}
 
-	private parseProbedConfig(entry: Entry, values: [string, string][]): DevcontainerConfig {
-		const get = (key: string) => values.find(([k]) => k === key)?.[1];
+	private parseProbedConfig(entry: Entry, probe: RunResult): DevcontainerConfig {
+		const get = (key: string) => lastValue(probe, key);
 		const missing = get('config-missing');
 		if (missing !== undefined) {
 			throw new ConfigError(`No configuration found at ${missing}. Open the project on ${entry.cluster} and run "Slurm Dev Container: Add Configuration File...".`);

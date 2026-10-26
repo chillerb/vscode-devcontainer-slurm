@@ -106,6 +106,15 @@ printf 'ARG:%s\\n' "$@"
 		]);
 	});
 
+	test('log script prints the job log of the session', () => {
+		fs.mkdirSync(ctx.sessionDir, { recursive: true });
+		fs.writeFileSync(path.join(ctx.sessionDir, 'job.log'), 'line 1\nline 2\n');
+		const result = bash(logScript(ctx.session), { HOME: home });
+		assert.deepStrictEqual(marked(result.stdout), [['log', 'line 1'], ['log', 'line 2']]);
+		const missing = bash(logScript('other'), { HOME: home });
+		assert.match(new Map(marked(missing.stdout)).get('error')!, /No job log found at .*\/\.slurm-devcontainer\/sessions\/other\/job\.log/);
+	});
+
 	test('validates the reported connection values', () => {
 		const values: [string, string][] = [
 			['submitted', '42'], ['state', 'RUNNING'], ['job', '42'], ['node', 'n1'], ['apptainer', '/x'], ['port', '2222'],

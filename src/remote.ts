@@ -77,7 +77,7 @@ export function runOnCluster(cluster: string, script: string, opts: RunOptions):
 }
 
 /** Last value of `key`. */
-export function lastValue(result: RunResult, key: string): string | undefined {
+export function lastValue(result: Pick<RunResult, 'values'>, key: string): string | undefined {
 	return result.values.filter(([k]) => k === key).pop()?.[1];
 }
 
