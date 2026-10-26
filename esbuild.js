@@ -34,6 +34,10 @@ async function main() {
 		sourcemap: !production,
 		sourcesContent: false,
 		platform: 'node',
+		// Prefer ESM builds of dependencies. For platform 'node', esbuild defaults to the
+		// 'main' field, which for jsonc-parser is a UMD build whose internal require() calls
+		// esbuild cannot follow, leaving them unresolved in the bundle.
+		mainFields: ['module', 'main'],
 		outfile: 'dist/extension.js',
 		external: ['vscode'],
 		logLevel: 'silent',
