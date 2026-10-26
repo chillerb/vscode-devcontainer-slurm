@@ -164,6 +164,36 @@ echo "42;cluster"
 		assert.strictEqual(fs.readFileSync(path.join(ctx.sessionDir, 'project'), 'utf8'), '/elsewhere\n');
 	});
 
+	test('launch retries transient squeue failures and detects jobs that left the queue', () => {
+		const env = { HOME: home, PATH: `${bin}:${process.env.PATH}` };
+		writeExecutable(path.join(bin, 'sbatch'), `#!/bin/bash
+sdir=$(dirname "$2")
+printf 'job=42\\nnode=n1\\napptainer=/x\\nport=2222\\n' > "$sdir/connection"
+echo 42
+`);
+		// The first two status queries time out, then the job is running.
+		writeExecutable(path.join(bin, 'squeue'), `#!/bin/bash
+[[ " $* " == *" -n "* ]] && exit 0
+n=$(cat "$HOME/calls" 2>/dev/null || echo 0); echo $((n + 1)) > "$HOME/calls"
+if [ "$n" -lt 2 ]; then echo "slurm_load_jobs error: Socket timed out" >&2; exit 1; fi
+echo RUNNING
+`);
+		const script = launchScript({ ctx, strategy: sshdStrategy, authorizedKey: 'k', timeoutSeconds: 30, pollSeconds: 0 });
+		const retried = bash(script, env);
+		assert.strictEqual(retried.status, 0, retried.stdout + retried.stderr);
+		assert.strictEqual(new Map(marked(retried.stdout)).get('port'), '2222');
+
+		writeExecutable(path.join(bin, 'squeue'), '#!/bin/bash\n[[ " $* " == *" -n "* ]] && exit 0\necho "slurm_load_jobs error: Socket timed out" >&2\nexit 1\n');
+		const failing = bash(script, env);
+		assert.strictEqual(failing.status, 6);
+		assert.match(new Map(marked(failing.stdout)).get('error')!, /squeue keeps failing.*Socket timed out/);
+
+		writeExecutable(path.join(bin, 'squeue'), '#!/bin/bash\n[[ " $* " == *" -n "* ]] && exit 0\necho "slurm_load_jobs error: Invalid job id specified" >&2\nexit 1\n');
+		const ended = bash(script, env);
+		assert.strictEqual(ended.status, 4);
+		assert.match(new Map(marked(ended.stdout)).get('error')!, /no longer active/);
+	});
+
 	test('stop cancels active jobs and reports failures', () => {
 		const env = { HOME: home, PATH: `${bin}:${process.env.PATH}` };
 		const run = () => {

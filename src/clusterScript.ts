@@ -12,6 +12,9 @@ export const MARKER = '@@sdc:';
  */
 const ACTIVE_STATES = 'PENDING,CONFIGURING,RUNNING,SUSPENDED';
 
+/** Consecutive squeue failures tolerated while waiting for a job. */
+const SQUEUE_RETRIES = 5;
+
 /** State directory on the cluster, relative to `$HOME`. */
 export const STATE_DIR = `.${PREFIX}`;
 
@@ -117,8 +120,24 @@ ${writes}
 fi
 deadline=$((SECONDS + ${opts.timeoutSeconds}))
 last=
+failures=0
 while :; do
-	state=$(squeue -h -j "$job" -o %T 2>/dev/null || true)
+	# A job that left the queue is reported as "Invalid job id"; other errors (e.g. controller timeouts)
+	# are retried a few times before giving up.
+	if out=$(squeue -h -j "$job" -o %T 2>&1); then
+		state=$out
+		failures=0
+	elif [[ "$out" == *"Invalid job id"* ]]; then
+		state=
+	else
+		failures=$((failures + 1))
+		if [ "$failures" -ge ${SQUEUE_RETRIES} ]; then
+			say "error=squeue keeps failing while waiting for job $job: $out"
+			exit 6
+		fi
+		sleep ${opts.pollSeconds}
+		continue
+	fi
 	if [ "$state" != "$last" ]; then
 		say "state=$state"
 		last=$state
