@@ -93,17 +93,19 @@ fi
 key=${shellQuote(opts.authorizedKey)}
 touch "$base/ssh/authorized_keys"
 grep -qxF "$key" "$base/ssh/authorized_keys" || printf '%s\\n' "$key" >> "$base/ssh/authorized_keys"
-project=${shellQuote(ctx.projectPath)}
-if [ -f "$sdir/project" ] && [ "$(cat "$sdir/project")" != "$project" ]; then
-	say "error=Session ${ctx.session} is already used for $(cat "$sdir/project")"
-	exit 3
-fi
-printf '%s\\n' "$project" > "$sdir/project"
 if ! jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(ctx.jobName)} -t ${ACTIVE_STATES} -o %i); then
 	say "error=squeue failed on the login node"
 	exit 6
 fi
 job=\${jobs%%$'\\n'*}
+# Session folders are named after the project folder. Another project with the same name may take over
+# the session once its job has ended (e.g. after it was removed from the list).
+project=${shellQuote(ctx.projectPath)}
+if [ -n "$job" ] && [ -f "$sdir/project" ] && [ "$(cat "$sdir/project")" != "$project" ]; then
+	say "error=Session ${ctx.session} is in use by $(cat "$sdir/project") (job $job). Stop that job first (scancel $job)."
+	exit 3
+fi
+printf '%s\\n' "$project" > "$sdir/project"
 if [ -n "$job" ]; then
 	say "reusing=$job"
 else
