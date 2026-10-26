@@ -46,6 +46,9 @@ jobs:
 
       - run: npx --yes @vscode/vsce package --out extension.vsix
 
+      - name: Check the bundled extension loads
+        run: npm run check-bundle
+
       - uses: actions/upload-artifact@v4
         with:
           name: vsix

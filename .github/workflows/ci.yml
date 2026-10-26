@@ -36,3 +36,9 @@ jobs:
       # semver version, icon, license).
       - name: Check the extension can be packaged
         run: npx --yes @vscode/vsce package --out /tmp/check.vsix
+
+      # Loads the production bundle that was just built. The unit tests run the
+      # unbundled tsc output, so they cannot see dependencies esbuild failed to
+      # bundle -- which is how 0.1.0 shipped without working commands.
+      - name: Check the bundled extension loads
+        run: npm run check-bundle
