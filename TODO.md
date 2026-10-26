@@ -1,6 +1,6 @@
 # TODO
 
-Design and decisions: see the "Architecture" section in `README.md` (once written). Short version:
+Design and decisions: see "How it works" in `README.md`. Short version:
 a UI extension (runs locally) submits a Slurm job on the login node via `ssh <alias>`. The job starts an
 Apptainer instance and a user-level sshd, and VS Code connects via Remote-SSH (`ProxyJump <alias>`) using
 extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config` is only changed (a single
@@ -10,7 +10,6 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 ## Planned (MVP)
 
-- [ ] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
 - [ ] Manual end-to-end test on a real Slurm cluster (needs the user)
 
 ## Done
@@ -26,6 +25,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] `registry.ts`: local list of known devcontainers (`globalState`) + tests
 - [x] `session.ts` + commands: Open, Add, Connect, Stop, Remove, Show Job Log
 - [x] Container-window behaviour: install `customizations.vscode.extensions`; Stop from inside the container
+- [x] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
 
 ## Future
 
