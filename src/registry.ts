@@ -15,6 +15,10 @@ export interface Entry {
 	lastJobId?: string;
 	/** Workspace folder inside the container, known after the first connect. */
 	workspaceFolder?: string;
+	/** `customizations.vscode.extensions`, resolved on the login node during the last connect. */
+	extensions?: string[];
+	/** Extensions already installed into this container by the extension. */
+	installedExtensions?: string[];
 	lastUsed: number;
 }
 
@@ -25,6 +29,12 @@ export interface StateStore {
 }
 
 const KEY = 'slurmDevcontainer.entries';
+
+/** Extensions from the config that have not been installed into the container yet. */
+export function extensionsToInstall(entry: Entry): string[] {
+	const installed = new Set((entry.installedExtensions ?? []).map(id => id.toLowerCase()));
+	return (entry.extensions ?? []).filter(id => !installed.has(id.toLowerCase()));
+}
 
 export class Registry {
 	constructor(private readonly store: StateStore) { }

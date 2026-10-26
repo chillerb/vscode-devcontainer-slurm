@@ -6,7 +6,8 @@ import { reportErrors, Sessions } from './session';
 
 export function activate(context: vscode.ExtensionContext) {
 	const log = vscode.window.createOutputChannel('Slurm Dev Container', { log: true });
-	const sessions = new Sessions(new Registry(context.globalState), log);
+	const registry = new Registry(context.globalState);
+	const sessions = new Sessions(registry, log);
 	const command = (id: string, fn: () => Promise<unknown>) =>
 		vscode.commands.registerCommand(`slurmDevcontainer.${id}`, () => reportErrors(log, fn));
 
@@ -24,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const entry = sessions.currentEntry();
 	if (entry) {
 		log.info(`connected to ${entry.name} on ${entry.cluster} (job ${entry.lastJobId ?? 'unknown'})`);
-		void reportErrors(log, () => installConfiguredExtensions(entry, log));
+		void reportErrors(log, () => installConfiguredExtensions(entry, registry, log));
 	}
 }
 

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { Registry, StateStore } from '../../registry';
+import { extensionsToInstall, Registry, StateStore } from '../../registry';
 
 class MemoryStore implements StateStore {
 	private readonly data = new Map<string, unknown>();
@@ -37,5 +37,15 @@ suite('registry', () => {
 		await registry.remove(a.alias);
 		assert.strictEqual(registry.findByAlias(a.alias), undefined);
 		await assert.rejects(registry.update(a.alias, {}), /Unknown/);
+	});
+
+	test('installs only extensions that were not installed before', async () => {
+		const registry = new Registry(new MemoryStore());
+		const a = await registry.register('c', '/p', 1);
+		assert.deepStrictEqual(extensionsToInstall(a), []);
+		const configured = await registry.update(a.alias, { extensions: ['ms-python.python', 'Foo.Bar'] });
+		assert.deepStrictEqual(extensionsToInstall(configured), ['ms-python.python', 'Foo.Bar']);
+		const installed = await registry.update(a.alias, { installedExtensions: ['foo.bar'] });
+		assert.deepStrictEqual(extensionsToInstall(installed), ['ms-python.python']);
 	});
 });

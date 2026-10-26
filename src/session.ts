@@ -248,7 +248,9 @@ export class Sessions {
 			if (options['HostKeyAlias']) {
 				await ssh.pinHostKey(options['HostKeyAlias'], info.hostKey);
 			}
-			await this.registry.update(entry.alias, { lastJobId: info.jobId, workspaceFolder: config.workspaceFolder, lastUsed: Date.now() });
+			await this.registry.update(entry.alias, {
+				lastJobId: info.jobId, workspaceFolder: config.workspaceFolder, extensions: config.extensions, lastUsed: Date.now(),
+			});
 			this.log.info(`${entry.alias}: job ${info.jobId} ready on ${info.node}`);
 			return config.workspaceFolder;
 		});

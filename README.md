@@ -73,7 +73,7 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 | `workspaceFolder` | Where the project is mounted and opened. Default: `/workspaces/${localWorkspaceFolderBasename}`. |
 | `containerEnv`, `remoteEnv` | Environment variables inside the container. |
 | `mounts` | Extra bind mounts: `"source=…,target=…[,readonly]"` or `{ "source", "target", "readonly" }`. |
-| `customizations.vscode.extensions` | Extensions installed when the container window opens. |
+| `customizations.vscode.extensions` | Extensions installed when the container window opens. Each one is installed once; extensions added to the list later are installed on the next connect. |
 | `slurm` | `partition`, `time`, `cpusPerTask`, `mem`, `gpus`, `account`, `qos`, `constraint`, plus `sbatchArgs` for anything else (e.g. `["--gres=gpu:a100:1"]`). |
 | `apptainer` | `binary` (default `apptainer`; use `singularity` on older systems), `modules` to `module load` first, `runArgs` for `apptainer instance start` (e.g. `--nv`, `--writable-tmpfs`). |
 | `connection` | `type` (only `sshd` for now) and `sshdPath` (default `/usr/sbin/sshd`). |
