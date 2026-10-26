@@ -3,6 +3,7 @@
   "displayName": "Slurm Dev Container",
   "description": "Develop inside Apptainer containers running as Slurm jobs on HPC clusters, similar to Dev Containers.",
   "version": "0.0.1",
+  "icon": "logo.png",
   "engines": {
     "vscode": "^1.140.0"
   },
