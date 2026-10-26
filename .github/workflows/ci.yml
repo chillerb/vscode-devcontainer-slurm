@@ -18,28 +18,21 @@ jobs:
 
       - run: npm ci
 
-      - name: Type-check host and webview
+      - name: Type-check
         run: npm run check-types
 
       - run: npm run lint
 
-      # Synthetic fixtures only. The real-file assertions need the gitignored
-      # ~40 MB samples, so the awkward cases they cover -- wrong DATA offsets,
-      # bit-packed $PnB, spillover keyword variants, an empty $FIL written as a
-      # doubled delimiter -- are reproduced by makeFcs and run here.
+      # Plain mocha, no VS Code instance. The cluster-side scripts run against
+      # fake sbatch/squeue/apptainer/sshd executables; the tests also need bash,
+      # ssh and ssh-keygen, which the runner image provides. The integration
+      # suite (npm test) is still the template placeholder, so it is not run
+      # here yet -- see TODO.md.
       - name: Unit tests
         run: npm run test:unit
 
-      # The integration suite drives a real VS Code, which needs a display.
-      # The --disable-dev-shm-usage launch arg it relies on is already in
-      # .vscode-test.mjs, because containers cap /dev/shm at 64 MB and Electron
-      # crashes without it.
-      - name: Integration tests
-        run: xvfb-run -a npm test
-
       # The same command the release runs, so a release cannot fail on
-      # something CI accepted. It validates the manifest too, which is what
-      # would have caught a version of "0.1" -- invalid semver, so VS Code
-      # discards the extension at scan time and it never loads at all.
+      # something CI accepted. It also validates the manifest (publisher,
+      # semver version, icon, license).
       - name: Check the extension can be packaged
         run: npx --yes @vscode/vsce package --out /tmp/check.vsix
