@@ -24,3 +24,62 @@ Here is an example for the vision of the user's perspective:
 ## TODO
 
 Track your todos in the `TODO.md` file.
+
+## Architecture
+
+- **UI extension** (`extensionKind: ["ui"]`): it always runs on the user's computer, also in Remote-SSH windows. It talks to clusters through the local `ssh <alias>` (`src/remote.ts`, `BatchMode=yes`) and depends on Microsoft's Remote-SSH (`extensionDependencies`).
+- **Connect flow** (`src/session.ts`):
+  1. `probeScript` reads the user, `$HOME`, the environment and the project config on the login node.
+  2. `parseConfig` parses and validates the config.
+  3. `launchScript` reuses the session's pending/running job or writes `job.sh`, `sshd_config` and `enter.sh` and runs `sbatch`, then waits for `connection`.
+  4. The extension writes the `Host slurm-devcontainer-<cluster>-<project>` block and pins the host key.
+  5. `vscode.openFolder(vscode-remote://ssh-remote+<alias>/workspaces/<project>)`.
+- **In the job** (`jobScript`): `apptainer instance start`, then the compute node's own `sshd` runs as the user on a free port. `ForceCommand enter.sh` runs every SSH session inside the instance via `apptainer exec instance://…`. Remote-SSH connects with `ProxyJump <login alias>`.
+- **Modules:**
+  - `config.ts`: config parsing, defaults, `${…}` substitution and the starter template;
+  - `clusterScript.ts`: all generated bash;
+  - `connection/`: the `ConnectionStrategy` interface and `sshd` implementation;
+  - `sshConfig.ts`: local SSH files;
+  - `registry.ts`: known containers in `globalState`;
+  - `authority.ts`: parsing `ssh-remote+…` authorities;
+  - `containerWindow.ts`: installs `customizations.vscode.extensions`.
+- **State:**
+  - local: `~/.ssh/slurm-devcontainer/` holds `config`, a key pair and `known_hosts`;
+  - cluster: `~/.slurm-devcontainer/` holds `ssh/` (sshd host key, `authorized_keys`), `sessions/<project>/` (generated files, `job.log`, `connection`) and `home/<project>/` (optional persistent container home).
+
+## Decisions (agreed with the user; keep unless they reopen them)
+
+- **Never change the user's `~/.ssh/config` without consent.** The only change is one `Include ~/.ssh/slurm-devcontainer/config` line, added after a modal dialog. Everything else lives in extension-owned files.
+- **The user sshd in the job** is the only connection strategy so far. Others (pam_slurm_adopt, `code tunnel`) go behind `ConnectionStrategy`. A Dev Containers-like remote authority resolver is not possible for third-party extensions: the API is proposed-only.
+- **Naming:**
+  - The extension identity is `chillerb.remote-slurm-containers`, with display name "Slurm Dev Containers" and command/setting prefix `remoteSlurmContainers.*`.
+  - The config `.slurm-devcontainer/slurm-devcontainer.json`, the host aliases `slurm-devcontainer-*` and the cluster/local folders deliberately keep the `slurm-devcontainer` stem, just as Microsoft's `remote-containers` kept `.devcontainer`.
+- **No automatic magic for Apptainer flags.** Users pass flags via `apptainer.runArgs`. `apptainer.persistentHome` is an explicit option (needed with `--contain`/`--containall`) rather than something derived from `runArgs`.
+- **Published on the VS Code Marketplace only.** Open VSX lacks Microsoft's Remote-SSH; see `TODO.md`.
+
+## Pitfalls we ran into
+
+- **Bundling:** esbuild must use `mainFields: ['module', 'main']`. Otherwise it bundles `jsonc-parser`'s UMD build and leaves `require('./impl/…')` unresolved. The extension then fails to load, and VS Code only says "command '…' not found". `npm run check-bundle` loads `dist/extension.js` with a stub `vscode` module; CI and the release workflow run it.
+- **"command not found"** for a command that appears in the palette means activation failed. Look at Output → "Extension Host", or "Developer: Show Running Extensions".
+- **Generated bash** is piped into `bash -l -s`. It is wrapped in a function (`wrap()`) so commands reading stdin can't swallow the rest of the script. Output lines carry the `@@sdc:` marker so login-shell noise is ignored.
+- **Slurm:**
+  - Only pending/running jobs count as active; a cancelled job stays visible as COMPLETING for a few seconds.
+  - `squeue -j` fails with "Invalid job id" once a job has left the queue. Other squeue errors are transient and retried.
+- **Apptainer:** it is not an isolation sandbox by default (same user, node hostname/network, home, `/tmp` and admin `bind path`s are visible). With `--contain`/`--containall`, home and `/tmp` are a tmpfs limited by `sessiondir max size` (64 MiB by default), too small for the VS Code server, hence `persistentHome`.
+- **Logins with a port** must be passed as `ssh://user@host:port`, because ssh rejects `host:port` as a destination.
+- **The UI extension cannot see extensions installed on the remote server** (`vscode.extensions.getExtension`), so the registry remembers what it installed.
+- **Marketplace:**
+  - categories are validated only when publishing, not by `vsce package`;
+  - versions can never be republished;
+  - publishing uses a global Azure DevOps PAT (`VSCE_PAT`, scope Marketplace → Manage, "All accessible organizations"), and those stop working on 1 Dec 2026 (see `TODO.md`).
+- **Tests:** the VS Code integration runner (`npm test`) cannot unpack VS Code inside this devcontainer. Use `npm run test:unit` (plain mocha on the pure modules). The cluster scripts are tested against fake `sbatch`/`squeue`/`apptainer`/`sshd` executables. Nothing replaces a manual test on a real cluster.
+
+## Workflow
+
+- **Build and test:** `npm run compile`, `npm run test:unit`, `npm run package && npm run check-bundle`, `npx @vscode/vsce package`.
+- **Commits:** make an atomic commit per finished TODO item and keep `TODO.md` up to date. Never push; the user pushes.
+- **Releases:**
+  - bump the version (`npm version X.Y.Z --no-git-tag-version`) and add a `CHANGELOG.md` entry;
+  - the user pushes a matching `vX.Y.Z` tag, which triggers `.github/workflows/release.yml`;
+  - never move or reuse tags or versions; a broken release gets a new version.
+- **Design discussions:** explain options concretely (which files change, what is stored where) and give a recommendation before asking the user to choose.
