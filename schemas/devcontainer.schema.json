@@ -1,0 +1,114 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Slurm Dev Container configuration",
+	"description": "Subset of devcontainer.json (https://containers.dev) plus Slurm and Apptainer settings.",
+	"type": "object",
+	"required": ["image"],
+	"properties": {
+		"name": {
+			"type": "string",
+			"description": "Display name of the dev container."
+		},
+		"image": {
+			"type": "string",
+			"description": "Apptainer image: \"docker://…\", \"oras://…\", \"library://…\" or a path to a .sif file (relative paths are resolved against the .slurm-devcontainer folder). Bare names such as \"ubuntu:24.04\" are treated as Docker images."
+		},
+		"workspaceFolder": {
+			"type": "string",
+			"default": "/workspaces/${localWorkspaceFolderBasename}",
+			"description": "Absolute path inside the container where the project folder is mounted and opened."
+		},
+		"containerEnv": {
+			"type": "object",
+			"additionalProperties": { "type": "string" },
+			"description": "Environment variables set inside the container. Supports ${localEnv:VAR} (read on the login node)."
+		},
+		"remoteEnv": {
+			"type": "object",
+			"additionalProperties": { "type": "string" },
+			"description": "Environment variables for VS Code and its terminals inside the container."
+		},
+		"mounts": {
+			"type": "array",
+			"description": "Additional bind mounts.",
+			"items": {
+				"anyOf": [
+					{
+						"type": "string",
+						"description": "Mount string, e.g. \"source=/scratch,target=/scratch,type=bind,readonly\"."
+					},
+					{
+						"type": "object",
+						"required": ["source", "target"],
+						"properties": {
+							"type": { "type": "string", "enum": ["bind"] },
+							"source": { "type": "string" },
+							"target": { "type": "string" },
+							"readonly": { "type": "boolean" }
+						}
+					}
+				]
+			}
+		},
+		"customizations": {
+			"type": "object",
+			"properties": {
+				"vscode": {
+					"type": "object",
+					"properties": {
+						"extensions": {
+							"type": "array",
+							"items": { "type": "string" },
+							"description": "Extension IDs installed in the container window."
+						}
+					}
+				}
+			}
+		},
+		"slurm": {
+			"type": "object",
+			"description": "Resources requested for the Slurm job.",
+			"additionalProperties": false,
+			"properties": {
+				"partition": { "type": "string", "description": "--partition" },
+				"time": { "type": "string", "description": "--time, e.g. \"08:00:00\"" },
+				"cpusPerTask": { "type": "integer", "minimum": 1, "description": "--cpus-per-task" },
+				"mem": { "type": "string", "description": "--mem, e.g. \"16G\"" },
+				"gpus": { "type": ["integer", "string"], "description": "--gpus, e.g. 1 or \"a100:1\"" },
+				"account": { "type": "string", "description": "--account" },
+				"qos": { "type": "string", "description": "--qos" },
+				"constraint": { "type": "string", "description": "--constraint" },
+				"sbatchArgs": {
+					"type": "array",
+					"items": { "type": "string" },
+					"description": "Additional sbatch arguments, e.g. [\"--gres=gpu:1\"]."
+				}
+			}
+		},
+		"apptainer": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"binary": { "type": "string", "default": "apptainer", "description": "Apptainer (or singularity) executable on the compute node." },
+				"modules": {
+					"type": "array",
+					"items": { "type": "string" },
+					"description": "Environment modules loaded before running apptainer."
+				},
+				"runArgs": {
+					"type": "array",
+					"items": { "type": "string" },
+					"description": "Extra arguments for \"apptainer instance start\", e.g. [\"--nv\"]."
+				}
+			}
+		},
+		"connection": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"type": { "type": "string", "enum": ["sshd"], "default": "sshd", "description": "How VS Code connects to the container." },
+				"sshdPath": { "type": "string", "default": "/usr/sbin/sshd", "description": "sshd executable on the compute node." }
+			}
+		}
+	}
+}

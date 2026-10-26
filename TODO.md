@@ -10,9 +10,6 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 ## Planned (MVP)
 
-- [ ] Rename the extension to `slurm-devcontainer` and set up the manifest (extensionKind `ui`, Remote-SSH dependency, commands, settings, JSON schema, `jsonc-parser`); remove helloWorld
-- [ ] Unit-test setup that runs without a VS Code instance (plain mocha on the pure modules)
-- [ ] `config.ts`: parse and validate `.slurm-devcontainer/devcontainer.json` (JSONC, defaults, variable substitution) + tests
 - [ ] Command "Add Slurm Dev Container Configuration" (writes a template)
 - [ ] `connection/`: `ConnectionStrategy` interface + `sshd` strategy
 - [ ] `clusterScript.ts`: generate the connect script, `job.sh`, `sshd_config` and `enter.sh` + tests (`bash -n`)
@@ -25,6 +22,10 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [ ] Manual end-to-end test on a real Slurm cluster (needs the user)
 
 ## Done
+
+- [x] Rename the extension to `slurm-devcontainer` and set up the manifest (extensionKind `ui`, Remote-SSH dependency, commands, settings, JSON schema, `jsonc-parser`); remove helloWorld
+- [x] Unit-test setup that runs without a VS Code instance (plain mocha on the pure modules)
+- [x] `config.ts`: parse and validate `.slurm-devcontainer/devcontainer.json` (JSONC, defaults, variable substitution) + tests
 
 ## Future
 
