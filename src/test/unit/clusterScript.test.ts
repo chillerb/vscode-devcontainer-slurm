@@ -164,6 +164,32 @@ echo "42;cluster"
 		assert.strictEqual(fs.readFileSync(path.join(ctx.sessionDir, 'project'), 'utf8'), '/elsewhere\n');
 	});
 
+	test('stop cancels active jobs and reports failures', () => {
+		const env = { HOME: home, PATH: `${bin}:${process.env.PATH}` };
+		const run = () => {
+			const result = bash(stopScript(ctx.jobName), env);
+			return { status: result.status, values: new Map(marked(result.stdout)) };
+		};
+		writeExecutable(path.join(bin, 'squeue'), '#!/bin/bash\nprintf "42\\n43\\n"\n');
+		writeExecutable(path.join(bin, 'scancel'), '#!/bin/bash\necho "$*" > "$HOME/cancelled"\n');
+		assert.deepStrictEqual(run(), { status: 0, values: new Map([['stopped', '42 43']]) });
+		assert.strictEqual(fs.readFileSync(path.join(home, 'cancelled'), 'utf8'), '42 43\n');
+
+		writeExecutable(path.join(bin, 'squeue'), '#!/bin/bash\nexit 0\n');
+		assert.deepStrictEqual(run(), { status: 0, values: new Map([['stopped', '']]) });
+
+		writeExecutable(path.join(bin, 'squeue'), '#!/bin/bash\necho "slurm_load_jobs error: Socket timed out" >&2\nexit 1\n');
+		const failedQueue = run();
+		assert.strictEqual(failedQueue.status, 6);
+		assert.match(failedQueue.values.get('error')!, /squeue failed.*Socket timed out/);
+
+		writeExecutable(path.join(bin, 'squeue'), '#!/bin/bash\necho 42\n');
+		writeExecutable(path.join(bin, 'scancel'), '#!/bin/bash\necho "scancel: error: Access denied" >&2\nexit 1\n');
+		const failedCancel = run();
+		assert.strictEqual(failedCancel.status, 7);
+		assert.match(failedCancel.values.get('error')!, /scancel 42 failed.*Access denied/);
+	});
+
 	test('launch reports a job that ended', () => {
 		writeExecutable(path.join(bin, 'squeue'), '#!/bin/bash\nexit 0\n');
 		writeExecutable(path.join(bin, 'sbatch'), '#!/bin/bash\nsdir=$(dirname "$2")\necho "boom" > "$sdir/job.log"\necho 43\n');

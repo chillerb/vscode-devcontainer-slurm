@@ -145,16 +145,20 @@ say "user=$(id -un)"
 say "hostkey=$(cat "$base/ssh/host_ed25519.pub")"`);
 }
 
-/** Cancels the job of a session. */
+/** Cancels the job of a session. Prints `stopped=<job ids>` (empty if there was none) or `error`. */
 export function stopScript(jobName: string): string {
 	return wrap(`set -u
-jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(jobName)} -t ${ACTIVE_STATES} -o %i)
-if [ -z "$jobs" ]; then
-	say "stopped="
-else
-	scancel $jobs
-	say "stopped=$(echo $jobs)"
-fi`);
+if ! jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(jobName)} -t ${ACTIVE_STATES} -o %i 2>&1); then
+	say "error=squeue failed on the login node: $jobs"
+	exit 6
+fi
+if [ -n "$jobs" ]; then
+	if ! out=$(scancel $jobs 2>&1); then
+		say "error=scancel $(echo $jobs) failed: $out"
+		exit 7
+	fi
+fi
+say "stopped=$(echo $jobs)"`);
 }
 
 /** Prints the job log of a session. */
