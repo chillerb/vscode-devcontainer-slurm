@@ -28,6 +28,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] `session.ts` + commands: Open, Add, Connect, Stop, Remove, Show Job Log
 - [x] Container-window behaviour: install `customizations.vscode.extensions`; Stop from inside the container
 - [x] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
+- [x] Optional persistent container home (`apptainer.persistentHome`, `persistentHomePath`) for `--containall`; README sections on isolation and Apptainer vs. Docker
 - [x] Packaging: publisher `chillerb`, MIT license, repository links, preview flag, `.vscodeignore`; CI and release workflow (VS Code Marketplace); `VSCE_PAT` secret added
 
 ## Future

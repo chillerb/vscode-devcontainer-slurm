@@ -75,12 +75,49 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 | `mounts` | Extra bind mounts: `"source=…,target=…[,readonly]"` or `{ "source", "target", "readonly" }`. |
 | `customizations.vscode.extensions` | Extensions installed when the container window opens. Each one is installed once; extensions added to the list later are installed on the next connect. |
 | `slurm` | `partition`, `time`, `cpusPerTask`, `mem`, `gpus`, `account`, `qos`, `constraint`, plus `sbatchArgs` for anything else (e.g. `["--gres=gpu:a100:1"]`). |
-| `apptainer` | `binary` (default `apptainer`; use `singularity` on older systems), `modules` to `module load` first, `runArgs` for `apptainer instance start` (e.g. `--nv`, `--writable-tmpfs`). |
+| `apptainer` | `binary` (default `apptainer`; use `singularity` on older systems), `modules` to `module load` first, `runArgs` for `apptainer instance start` (e.g. `--nv`, `--writable-tmpfs`, `--containall`), `persistentHome` to use a persistent container home instead of your real home, and `persistentHomePath` for its location (see [Isolating the container](#isolating-the-container---containall)). |
 | `connection` | `type` (only `sshd` for now) and `sshdPath` (default `/usr/sbin/sshd`). |
 
 Variables: `${localWorkspaceFolder}` and `${localWorkspaceFolderBasename}` refer to the project folder on the cluster. `${containerWorkspaceFolder}` is the folder inside the container. `${localEnv:VAR}` and `${localEnv:VAR:default}` read your environment on the login node.
 
 The project folder and your home directory are available inside the container (Apptainer binds `$HOME` by default). The container image is read-only. Add `--writable-tmpfs` to `runArgs` if tools need to write outside your home directory.
+
+### Apptainer is not Docker
+
+Apptainer is built to blend into an HPC system, not to isolate you from it. It swaps the software environment (the image's OS, libraries and tools) but keeps:
+
+- **your user:** `whoami` shows your cluster user, with your normal permissions. There is no root, and no `vscode` user, even if the image defines one. A `/home/vscode` you may see comes from the image.
+- **the node's hostname and network:** a shell prompt shows the compute node's name. Check `cat /etc/os-release` to see that you are inside the container.
+- **parts of the host file system:** your home (at its real path), `/tmp`, `/var/tmp`, and any `bind path` entries your admins configured in `apptainer.conf`, often shared data or scratch file systems. Files there are protected only by their normal permissions.
+
+## Isolating the container (`--containall`)
+
+To keep tools and coding agents in the container away from your home directory and the host, use `--containall` together with a persistent container home:
+
+```jsonc
+"apptainer": {
+	"runArgs": ["--containall"],
+	"persistentHome": true
+	// "persistentHomePath": "~/containers/${localWorkspaceFolderBasename}"  // optional
+}
+```
+
+**What is hidden:** your real home directory (including SSH keys and dotfiles), the host's `/tmp`, the admin-configured bind paths, the host's processes (own PID namespace), and the host environment.
+
+**Why `persistentHome` is needed:** with `--contain`/`--containall`, Apptainer gives the container an empty home on a small temporary filesystem (64 MiB by default), which is too small for the VS Code server and is lost after every job. With `persistentHome: true`, the container uses a directory on the cluster as its home instead: by default `~/.slurm-devcontainer/home/<project>`, mounted at your normal home path. The VS Code server and extensions are downloaded into it on the first connect and are kept across jobs.
+
+- **Downloading the server** needs internet access on the compute node. Otherwise set `"remote.SSH.localServerDownload": "always"` so VS Code downloads it on your computer.
+- **Proxies:** `--containall` also clears the environment. If your site uses a proxy, pass it in: `"containerEnv": { "https_proxy": "${localEnv:https_proxy}" }`.
+- **`/tmp` stays small:** inside a contained container, `/tmp` is still the small temporary filesystem. Add `--workdir <dir>` to `runArgs` if tools need more space there.
+- **Resetting:** delete the home folder, then remove and re-add the container with **Remove Container from List...** so the configured extensions are installed again.
+- `persistentHome` also works without `--containall`. It then only replaces your real home; `/tmp` and the admin bind paths stay visible.
+
+**What is not isolated:**
+
+- **The network:** the container shares the node's network. Separating it would also cut off VS Code's connection.
+- **The project folder** is mounted read-write. Anything in it, including `.git`, can be changed or deleted.
+- **Mounts you add** under `mounts`.
+- **Git credentials from VS Code:** VS Code forwards Git credential requests from the integrated terminal to your computer, so `git push` inside the container may use your local credentials. Set `"git.terminalAuthentication": false` (and possibly `"git.useIntegratedAskPass": false`) to prevent this.
 
 ## Commands
 
@@ -112,6 +149,7 @@ The project folder and your home directory are available inside the container (A
 
 **On the cluster** (in your home directory)
 - `~/.slurm-devcontainer/ssh/` holds the sshd host key and an `authorized_keys` file containing only the extension's public key.
+- `~/.slurm-devcontainer/home/<project>/` is the persistent container home, only with `persistentHome: true` and no `persistentHomePath`.
 - `~/.slurm-devcontainer/sessions/<project>/` holds the generated `job.sh`, `sshd_config` and `enter.sh`, plus `job.log` and the current `connection` details.
 
 ## Logins with 2FA or passwords
