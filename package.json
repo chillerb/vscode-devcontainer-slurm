@@ -3,12 +3,24 @@
   "displayName": "Slurm Dev Container",
   "description": "Develop inside Apptainer containers running as Slurm jobs on HPC clusters, similar to Dev Containers.",
   "version": "0.0.1",
+  "publisher": "chillerb",
+  "license": "MIT",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chillerb/vscode-devcontainer-slurm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chillerb/vscode-devcontainer-slurm/issues"
+  },
+  "homepage": "https://github.com/chillerb/vscode-devcontainer-slurm#readme",
   "icon": "logo.png",
   "engines": {
     "vscode": "^1.140.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Remote"
   ],
   "keywords": [
     "slurm",
