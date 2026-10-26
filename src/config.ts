@@ -3,7 +3,7 @@ import * as path from 'path';
 
 /** Location of the configuration file, relative to the project folder. */
 export const CONFIG_DIR = '.slurm-devcontainer';
-export const CONFIG_FILE = `${CONFIG_DIR}/devcontainer.json`;
+export const CONFIG_FILE = `${CONFIG_DIR}/slurm-devcontainer.json`;
 
 export interface SlurmOptions {
 	partition?: string;

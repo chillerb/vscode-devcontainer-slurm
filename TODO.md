@@ -18,7 +18,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 - [x] Rename the extension to `slurm-devcontainer` and set up the manifest (extensionKind `ui`, Remote-SSH dependency, commands, settings, JSON schema, `jsonc-parser`); remove helloWorld
 - [x] Unit-test setup that runs without a VS Code instance (plain mocha on the pure modules)
-- [x] `config.ts`: parse and validate `.slurm-devcontainer/devcontainer.json` (JSONC, defaults, variable substitution) + tests
+- [x] `config.ts`: parse and validate `.slurm-devcontainer/slurm-devcontainer.json` (JSONC, defaults, variable substitution) + tests
 - [x] Command "Add Slurm Dev Container Configuration" (writes a template)
 - [x] `connection/`: `ConnectionStrategy` interface + `sshd` strategy
 - [x] `clusterScript.ts`: generate the connect script, `job.sh`, `sshd_config` and `enter.sh` + tests (`bash -n`)

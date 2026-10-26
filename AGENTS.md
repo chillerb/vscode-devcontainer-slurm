@@ -11,7 +11,7 @@
 Here is an example for the vision of the user's perspective:
 
 - user connects to login node via ssh and runs a vscode session
-- after adding configuration files (`.slurm-devcontainer/devcontainer.json`), user executes vscode command called, for example, `Open in slurm devcontainer`
+- after adding configuration files (`.slurm-devcontainer/slurm-devcontainer.json`), user executes vscode command called, for example, `Open in slurm devcontainer`
 - vsode will then submit a slurm job for development
 - the slurm jub runs the apptainer container for development, to which vscode will connect and mount and open the project in `/workspaces/{project}` (similar to the actual devcontainer plugin)
 

@@ -6,7 +6,7 @@ import * as path from 'path';
 import {
 	clusterPaths, jobScript, launchScript, logScript, parseMarkedLine, probeScript, sbatchDirectives, stopScript,
 } from '../../clusterScript';
-import { parseConfig } from '../../config';
+import { CONFIG_FILE, parseConfig } from '../../config';
 import { sshdStrategy } from '../../connection/sshd';
 import { JobContext } from '../../connection/types';
 
@@ -107,7 +107,7 @@ printf 'ARG:%s\\n' "$@"
 	});
 
 	test('probe reports home, env and config', () => {
-		fs.writeFileSync(path.join(project, '.slurm-devcontainer', 'devcontainer.json'), '{ "image": "x" }');
+		fs.writeFileSync(path.join(project, CONFIG_FILE), '{ "image": "x" }');
 		const result = bash(`echo "motd noise"\n${probeScript(project)}`, { HOME: home, PATH: `${bin}:${process.env.PATH}`, MARKER_TEST: 'a\nb' });
 		const values = new Map(marked(result.stdout));
 		assert.strictEqual(values.get('home'), home);

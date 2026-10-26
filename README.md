@@ -2,7 +2,7 @@
 
 Develop inside [Apptainer](https://apptainer.org/) containers that run as [Slurm](https://slurm.schedmd.com/) jobs on HPC clusters, similar to the [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) extension, which needs Docker.
 
-You describe the container in `.slurm-devcontainer/devcontainer.json`. With one command the extension:
+You describe the container in `.slurm-devcontainer/slurm-devcontainer.json`. With one command the extension:
 1. submits a Slurm job (or reuses the running one) that starts the container on a compute node;
 2. opens the project inside the container at `/workspaces/<project>` in a new VS Code window.
 
@@ -52,7 +52,7 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 
 ## Configuration
 
-`.slurm-devcontainer/devcontainer.json` (JSON with comments) uses a subset of [devcontainer.json](https://containers.dev/implementors/json_reference/):
+`.slurm-devcontainer/slurm-devcontainer.json` (JSON with comments) uses a subset of [devcontainer.json](https://containers.dev/implementors/json_reference/):
 
 ```jsonc
 {
@@ -92,7 +92,7 @@ The project folder and your home directory are available inside the container (A
 | Stop Container Job... | Cancels the Slurm job (`scancel`). |
 | Remove Container from List... | Forgets a dev container, optionally stopping its job first. |
 | Show Job Log... | Shows the job's output (container start-up, sshd). |
-| Add Configuration File... | Creates a commented `.slurm-devcontainer/devcontainer.json`. |
+| Add Configuration File... | Creates a commented `.slurm-devcontainer/slurm-devcontainer.json`. |
 
 ## Settings
 

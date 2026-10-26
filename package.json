@@ -32,14 +32,14 @@
       {
         "id": "jsonc",
         "filenamePatterns": [
-          "**/.slurm-devcontainer/devcontainer.json"
+          "**/.slurm-devcontainer/slurm-devcontainer.json"
         ]
       }
     ],
     "jsonValidation": [
       {
-        "fileMatch": "**/.slurm-devcontainer/devcontainer.json",
-        "url": "./schemas/devcontainer.schema.json"
+        "fileMatch": "**/.slurm-devcontainer/slurm-devcontainer.json",
+        "url": "./schemas/slurm-devcontainer.schema.json"
       }
     ],
     "configuration": {
