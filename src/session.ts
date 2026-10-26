@@ -1,10 +1,9 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { sshAuthority, sshDestination, sshHostFromAuthority } from './authority';
-import { clusterPaths, launchScript, logScript, probeScript, stopScript } from './clusterScript';
+import { clusterPaths, launchScript, logScript, parseConnectionInfo, probeScript, stopScript } from './clusterScript';
 import { ConfigError, DevcontainerConfig, parseConfig } from './config';
 import { sshdStrategy } from './connection/sshd';
-import { ConnectionInfo } from './connection/types';
 import { jobName, PREFIX } from './naming';
 import { Entry, Registry } from './registry';
 import { checkResult, lastValue, RemoteError, runOnCluster } from './remote';
@@ -239,10 +238,7 @@ export class Sessions {
 				}
 			});
 
-			const values = Object.fromEntries(result.values);
-			const info: ConnectionInfo = {
-				jobId: values['job'], node: values['node'], user: values['user'], hostKey: values['hostkey'], values,
-			};
+			const info = parseConnectionInfo(result.values, sshdStrategy);
 			const options = sshdStrategy.hostOptions(entry.cluster, info, { identityFile: IDENTITY_FILE, knownHostsFile: KNOWN_HOSTS_FILE });
 			await ssh.writeHost(entry.alias, options);
 			if (options['HostKeyAlias']) {

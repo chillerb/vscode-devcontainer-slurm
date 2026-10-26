@@ -39,6 +39,8 @@ export interface SessionFile {
  */
 export interface ConnectionStrategy {
 	readonly type: string;
+	/** Keys the job must publish via `publish_connection`, e.g. `port`. */
+	readonly requiredValues: readonly string[];
 	/** Files written to the session directory before the job is submitted. */
 	sessionFiles(ctx: JobContext): Record<string, SessionFile>;
 	/**

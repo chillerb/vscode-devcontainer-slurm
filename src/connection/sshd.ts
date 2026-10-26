@@ -9,6 +9,7 @@ import { ConnectionInfo, ConnectionStrategy, JobContext, LocalSshFiles, SessionF
  */
 export const sshdStrategy: ConnectionStrategy = {
 	type: 'sshd',
+	requiredValues: ['port'],
 
 	sessionFiles(ctx: JobContext): Record<string, SessionFile> {
 		return {

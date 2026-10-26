@@ -1,5 +1,5 @@
 import { CONFIG_FILE, DevcontainerConfig } from './config';
-import { ConnectionStrategy, JobContext } from './connection/types';
+import { ConnectionInfo, ConnectionStrategy, JobContext } from './connection/types';
 import { PREFIX } from './naming';
 import { shellQuote, writeFileSnippet } from './shell';
 
@@ -162,6 +162,22 @@ done
 sed 's/^/${MARKER}/' "$sdir/connection"
 say "user=$(id -un)"
 say "hostkey=$(cat "$base/ssh/host_ed25519.pub")"`);
+}
+
+/** Builds the connection info from the output of {@link launchScript}; throws if anything is missing. */
+export function parseConnectionInfo(values: [string, string][], strategy: ConnectionStrategy): ConnectionInfo {
+	const all = Object.fromEntries(values);
+	const missing = ['job', 'node', 'user', 'hostkey', ...strategy.requiredValues].filter(key => !all[key]);
+	if (missing.length > 0) {
+		throw new Error(`The cluster did not report ${missing.join(', ')} for the container. Check the job log.`);
+	}
+	if (!/^ssh-\S+ \S+/.test(all['hostkey'])) {
+		throw new Error(`Unexpected sshd host key from the cluster: ${all['hostkey']}`);
+	}
+	if (strategy.requiredValues.includes('port') && !/^\d+$/.test(all['port'])) {
+		throw new Error(`Unexpected port from the cluster: ${all['port']}`);
+	}
+	return { jobId: all['job'], node: all['node'], user: all['user'], hostKey: all['hostkey'], values: all };
 }
 
 /** Cancels the job of a session. Prints `stopped=<job ids>` (empty if there was none) or `error`. */

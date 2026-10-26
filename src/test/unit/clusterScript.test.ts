@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
-	clusterPaths, jobScript, launchScript, logScript, parseMarkedLine, probeScript, sbatchDirectives, stopScript,
+	clusterPaths, jobScript, launchScript, logScript, parseConnectionInfo, parseMarkedLine, probeScript, sbatchDirectives, stopScript,
 } from '../../clusterScript';
 import { CONFIG_FILE, parseConfig } from '../../config';
 import { sshdStrategy } from '../../connection/sshd';
@@ -104,6 +104,22 @@ printf 'ARG:%s\\n' "$@"
 			'#SBATCH --job-name=job', '#SBATCH --output=/log', '#SBATCH --nodes=1', '#SBATCH --ntasks=1',
 			'#SBATCH --partition=gpu', '#SBATCH --time=01:00:00', '#SBATCH --gpus=1', '#SBATCH --qos=short',
 		]);
+	});
+
+	test('validates the reported connection values', () => {
+		const values: [string, string][] = [
+			['submitted', '42'], ['state', 'RUNNING'], ['job', '42'], ['node', 'n1'], ['apptainer', '/x'], ['port', '2222'],
+			['user', 'jdoe'], ['hostkey', 'ssh-ed25519 AAAA host'],
+		];
+		assert.deepStrictEqual(parseConnectionInfo(values, sshdStrategy), {
+			jobId: '42', node: 'n1', user: 'jdoe', hostKey: 'ssh-ed25519 AAAA host',
+			values: { submitted: '42', state: 'RUNNING', job: '42', node: 'n1', apptainer: '/x', port: '2222', user: 'jdoe', hostkey: 'ssh-ed25519 AAAA host' },
+		});
+		const without = (key: string) => values.filter(([k]) => k !== key);
+		assert.throws(() => parseConnectionInfo(without('port'), sshdStrategy), /did not report port/);
+		assert.throws(() => parseConnectionInfo(without('hostkey'), sshdStrategy), /did not report hostkey/);
+		assert.throws(() => parseConnectionInfo([...values, ['hostkey', 'cat: no such file']], sshdStrategy), /Unexpected sshd host key/);
+		assert.throws(() => parseConnectionInfo([...values, ['port', 'abc']], sshdStrategy), /Unexpected port/);
 	});
 
 	test('probe reports home, env and config', () => {
