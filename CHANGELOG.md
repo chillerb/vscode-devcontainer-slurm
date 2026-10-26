@@ -4,6 +4,18 @@ All notable changes to the "remote-slurm-containers" extension will be documente
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.1.2] - 2026-10-26
+
+### Fixed
+
+- The extension failed to activate, so every command reported "command not found". A dependency (`jsonc-parser`) was bundled incorrectly.
+
+## [v0.1.1] - 2026-10-26
+
+### Changed
+
+- First Marketplace release (0.1.0 was never published): extension ID `remote-slurm-containers`, display name "Slurm Dev Containers".
+
 ## [v0.1.0] - 2026-10-26
 
 ### Added
