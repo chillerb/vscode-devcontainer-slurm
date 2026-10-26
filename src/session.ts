@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { sshAuthority, sshHostFromAuthority } from './authority';
+import { sshAuthority, sshDestination, sshHostFromAuthority } from './authority';
 import { clusterPaths, launchScript, logScript, probeScript, stopScript } from './clusterScript';
 import { ConfigError, DevcontainerConfig, parseConfig } from './config';
 import { sshdStrategy } from './connection/sshd';
@@ -77,7 +77,7 @@ export class Sessions {
 		});
 		if (cluster === other) {
 			cluster = await vscode.window.showInputBox({
-				title: 'Add Slurm Dev Container (1/2)', prompt: 'SSH host of the cluster login node (alias from ~/.ssh/config or user@host)',
+				title: 'Add Slurm Dev Container (1/2)', prompt: 'SSH host of the cluster login node (alias from ~/.ssh/config, user@host or user@host:port)',
 				validateInput: v => /^\S+$/.test(v) ? undefined : 'Enter a host without spaces',
 			});
 		}
@@ -92,7 +92,7 @@ export class Sessions {
 		if (!projectPath) {
 			return undefined;
 		}
-		const entry = await this.registry.register(cluster, projectPath);
+		const entry = await this.registry.register(sshDestination(cluster), projectPath);
 		const choice = await vscode.window.showInformationMessage(`Added ${entry.name} on ${cluster}.`, 'Connect');
 		if (choice) {
 			await this.connect(entry);
