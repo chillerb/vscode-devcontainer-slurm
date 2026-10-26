@@ -98,7 +98,16 @@
 				"runArgs": {
 					"type": "array",
 					"items": { "type": "string" },
-					"description": "Extra arguments for \"apptainer instance start\", e.g. [\"--nv\"]."
+					"description": "Extra arguments for \"apptainer instance start\", e.g. [\"--nv\"] or [\"--containall\"]."
+				},
+				"persistentHome": {
+					"type": "boolean",
+					"default": false,
+					"description": "Mount a persistent directory as the container's home instead of your real home (apptainer --home). Needed with --contain/--containall, where the default home is a tiny temporary filesystem lost after every job."
+				},
+				"persistentHomePath": {
+					"type": "string",
+					"description": "Location of the persistent home on the cluster (absolute or ~/...). Default: ~/.slurm-devcontainer/home/<project>. Requires persistentHome: true."
 				}
 			}
 		},

@@ -235,6 +235,15 @@ export function sbatchDirectives(jobName: string, logFile: string, config: Devco
 	return opts.map(o => `#SBATCH ${o}`);
 }
 
+/** Shell expression for the persistent container home: the configured path or `<state dir>/home/<session>`. */
+function persistentHomeDir(ctx: JobContext): string {
+	const configured = ctx.config.apptainer.persistentHomePath;
+	if (configured === undefined) {
+		return shellQuote(`${ctx.baseDir}/home/${ctx.session}`);
+	}
+	return configured.startsWith('~/') ? `"$HOME"/${shellQuote(configured.slice(2))}` : shellQuote(configured);
+}
+
 /** The batch script: starts the Apptainer instance, then hands over to the connection strategy. */
 export function jobScript(ctx: JobContext, strategy: ConnectionStrategy): string {
 	const { config } = ctx;
@@ -242,7 +251,11 @@ export function jobScript(ctx: JobContext, strategy: ConnectionStrategy): string
 		`${ctx.projectPath}:${config.workspaceFolder}`,
 		...config.mounts.map(m => `${m.source}:${m.target}${m.readonly ? ':ro' : ''}`),
 	].flatMap(b => ['--bind', shellQuote(b)]);
-	const startArgs = [...config.apptainer.runArgs.map(shellQuote), ...binds, shellQuote(config.image), '"$instance"'];
+	const home = config.apptainer.persistentHome ? persistentHomeDir(ctx) : undefined;
+	const startArgs = [
+		...config.apptainer.runArgs.map(shellQuote), ...(home ? ['--home', '"$homedir:$HOME"'] : []),
+		...binds, shellQuote(config.image), '"$instance"',
+	];
 	const modules = config.apptainer.modules.length === 0 ? '' : `if ! command -v module >/dev/null 2>&1; then
 	for f in /etc/profile.d/lmod.sh /etc/profile.d/modules.sh /usr/share/lmod/lmod/init/bash; do
 		if [ -r "$f" ]; then . "$f"; break; fi
@@ -257,7 +270,7 @@ set -uo pipefail
 sdir=${shellQuote(ctx.sessionDir)}
 apptainer=${shellQuote(config.apptainer.binary)}
 instance="${PREFIX}-$SLURM_JOB_ID"
-log() { echo "[${PREFIX}] $*"; }
+${home ? `homedir=${home}\nmkdir -p "$homedir" && chmod 700 "$homedir"\n` : ''}log() { echo "[${PREFIX}] $*"; }
 publish_connection() {
 	{
 		echo "job=$SLURM_JOB_ID"

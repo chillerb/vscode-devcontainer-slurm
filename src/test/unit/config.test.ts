@@ -14,7 +14,7 @@ suite('config', () => {
 			partition: undefined, time: undefined, cpusPerTask: undefined, mem: undefined, gpus: undefined,
 			account: undefined, qos: undefined, constraint: undefined, sbatchArgs: [],
 		});
-		assert.deepStrictEqual(config.apptainer, { binary: 'apptainer', modules: [], runArgs: [] });
+		assert.deepStrictEqual(config.apptainer, { binary: 'apptainer', modules: [], runArgs: [], persistentHome: false, persistentHomePath: undefined });
 		assert.deepStrictEqual(config.connection, { type: 'sshd', sshdPath: '/usr/sbin/sshd' });
 	});
 
@@ -44,6 +44,17 @@ suite('config', () => {
 		assert.strictEqual(config.slurm.gpus, '2');
 		assert.strictEqual(config.slurm.cpusPerTask, 8);
 		assert.deepStrictEqual(config.apptainer.runArgs, ['--nv']);
+	});
+
+	test('parses the persistent home options', () => {
+		const apptainer = (options: object) => parseConfig(JSON.stringify({ image: 'x', apptainer: options }), vars).apptainer;
+		assert.strictEqual(apptainer({ persistentHome: true }).persistentHome, true);
+		assert.strictEqual(apptainer({ persistentHome: true }).persistentHomePath, undefined);
+		assert.strictEqual(apptainer({ persistentHome: true, persistentHomePath: '~/c/${localWorkspaceFolderBasename}' }).persistentHomePath, '~/c/my-project');
+		assert.strictEqual(apptainer({ persistentHome: true, persistentHomePath: '/scratch/${localEnv:USER}/home' }).persistentHomePath, '/scratch/jdoe/home');
+		assert.throws(() => apptainer({ persistentHomePath: '/x' }), /requires "apptainer.persistentHome": true/);
+		assert.throws(() => apptainer({ persistentHome: true, persistentHomePath: 'rel/x' }), /absolute path or start with ~\//);
+		assert.throws(() => apptainer({ persistentHome: 'yes' }), /must be true or false/);
 	});
 
 	test('rejects invalid configs', () => {

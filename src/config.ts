@@ -21,6 +21,10 @@ export interface ApptainerOptions {
 	binary: string;
 	modules: string[];
 	runArgs: string[];
+	/** Mount a persistent directory as the container's home instead of the real home (`--home`). */
+	persistentHome: boolean;
+	/** Absolute or `~/` path of that directory; defaults to a folder per project in the cluster state directory. */
+	persistentHomePath?: string;
 }
 
 export interface ConnectionOptions {
@@ -108,6 +112,17 @@ export function parseConfig(text: string, vars: ConfigVariables): DevcontainerCo
 		throw new ConfigError(`${CONFIG_FILE}: "slurm.gpus" must be a number or string`);
 	}
 
+	const persistentHome = optBoolean(apptainer, 'persistentHome', 'apptainer.persistentHome') ?? false;
+	const persistentHomePath = mapOptional(optString(apptainer, 'persistentHomePath', 'apptainer.persistentHomePath'), subst);
+	if (persistentHomePath !== undefined) {
+		if (!persistentHome) {
+			throw new ConfigError(`${CONFIG_FILE}: "apptainer.persistentHomePath" requires "apptainer.persistentHome": true`);
+		}
+		if (!persistentHomePath.startsWith('/') && !persistentHomePath.startsWith('~/')) {
+			throw new ConfigError(`${CONFIG_FILE}: "apptainer.persistentHomePath" must be an absolute path or start with ~/`);
+		}
+	}
+
 	const customizations = optObject(raw, 'customizations') ?? {};
 	const vscodeCustomizations = optObject(customizations, 'vscode', 'customizations.vscode') ?? {};
 
@@ -134,6 +149,8 @@ export function parseConfig(text: string, vars: ConfigVariables): DevcontainerCo
 			binary: optString(apptainer, 'binary', 'apptainer.binary') ?? 'apptainer',
 			modules: optStringArray(apptainer, 'modules', 'apptainer.modules'),
 			runArgs: optStringArray(apptainer, 'runArgs', 'apptainer.runArgs').map(subst),
+			persistentHome,
+			persistentHomePath,
 		},
 		connection: {
 			type: 'sshd',
@@ -226,6 +243,21 @@ function optNumber(obj: Record<string, unknown>, key: string, label = key): numb
 	return value;
 }
 
+function optBoolean(obj: Record<string, unknown>, key: string, label = key): boolean | undefined {
+	const value = obj[key];
+	if (value === undefined) {
+		return undefined;
+	}
+	if (typeof value !== 'boolean') {
+		throw new ConfigError(`${CONFIG_FILE}: "${label}" must be true or false`);
+	}
+	return value;
+}
+
+function mapOptional(value: string | undefined, fn: (s: string) => string): string | undefined {
+	return value === undefined ? undefined : fn(value);
+}
+
 function optObject(obj: Record<string, unknown>, key: string, label = key): Record<string, unknown> | undefined {
 	const value = obj[key];
 	if (value === undefined) {
@@ -314,8 +346,16 @@ export function configTemplate(name: string): string {
 	"apptainer": {
 		// Environment modules loaded before running apptainer, e.g. ["apptainer"].
 		"modules": [],
-		// Extra arguments for "apptainer instance start", e.g. ["--nv"] for NVIDIA GPUs.
-		"runArgs": []
+		// Extra arguments for "apptainer instance start", e.g. ["--nv"] for NVIDIA GPUs,
+		// or ["--containall"] to isolate the container from your home directory and the host.
+		"runArgs": [],
+		// Use a persistent directory as the container's home instead of your real home directory.
+		// Needed with "--contain"/"--containall": otherwise the container's home is a tiny temporary
+		// filesystem (64 MiB by default), too small for the VS Code server and lost after every job.
+		// With a persistent home, the VS Code server and extensions are downloaded only once.
+		"persistentHome": false
+		// Optional location; default: ~/.slurm-devcontainer/home/<project> on the cluster.
+		// "persistentHomePath": "~/containers/\${localWorkspaceFolderBasename}"
 	}
 }
 `;
