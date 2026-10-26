@@ -4,6 +4,16 @@ All notable changes to the "remote-slurm-containers" extension will be documente
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.3.1] - 2026-10-26
+
+### Fixed
+
+- Installing the configured extensions in a container no longer asks whether to install them on all your devices (Settings Sync); they are installed for the container only.
+
+### Documentation
+
+- GPUs need `--nv` in `apptainer.runArgs` in addition to `slurm.gpus`.
+
 ## [v0.3.0] - 2026-10-26
 
 ### Changed
