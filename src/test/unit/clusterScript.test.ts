@@ -142,7 +142,7 @@ echo "42;cluster"
 		assert.strictEqual(fs.readFileSync(path.join(ctx.baseDir, 'ssh', 'authorized_keys'), 'utf8'), 'ssh-ed25519 AAAA test\n');
 
 		// A second launch reuses the job and does not duplicate the key.
-		fs.writeFileSync(path.join(home, 'existing'), '42\n');
+		fs.writeFileSync(path.join(home, 'existing'), '42\n43\n');
 		const again = new Map(marked(bash(script, env).stdout));
 		assert.strictEqual(again.get('reusing'), '42');
 		assert.strictEqual(fs.readFileSync(path.join(ctx.baseDir, 'ssh', 'authorized_keys'), 'utf8'), 'ssh-ed25519 AAAA test\n');

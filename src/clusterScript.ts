@@ -93,7 +93,11 @@ if [ -f "$sdir/project" ] && [ "$(cat "$sdir/project")" != "$project" ]; then
 	exit 3
 fi
 printf '%s\\n' "$project" > "$sdir/project"
-job=$(squeue -h -u "$(id -un)" -n ${shellQuote(ctx.jobName)} -o %i | head -n 1)
+if ! jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(ctx.jobName)} -o %i); then
+	say "error=squeue failed on the login node"
+	exit 6
+fi
+job=\${jobs%%$'\\n'*}
 if [ -n "$job" ]; then
 	say "reusing=$job"
 else

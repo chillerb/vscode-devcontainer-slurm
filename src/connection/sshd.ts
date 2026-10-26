@@ -71,7 +71,6 @@ UsePAM no
 StrictModes no
 PubkeyAuthentication yes
 PasswordAuthentication no
-KbdInteractiveAuthentication no
 AllowTcpForwarding yes
 X11Forwarding no
 PermitTTY yes
