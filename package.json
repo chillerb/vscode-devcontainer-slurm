@@ -19,8 +19,7 @@
     "vscode": "^1.140.0"
   },
   "categories": [
-    "Other",
-    "Remote"
+    "Other"
   ],
   "keywords": [
     "slurm",
