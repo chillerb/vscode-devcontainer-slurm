@@ -4,6 +4,16 @@ All notable changes to the "remote-slurm-containers" extension will be documente
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.2.0] - 2026-10-26
+
+### Added
+
+- `apptainer.persistentHome` and `apptainer.persistentHomePath`: use a persistent directory as the container's home instead of your real home. This makes `--contain`/`--containall` usable; the VS Code server and extensions are downloaded once and kept across jobs.
+
+### Documentation
+
+- How to isolate the container with `--containall`, what is and isn't isolated, and how Apptainer differs from Docker.
+
 ## [v0.1.2] - 2026-10-26
 
 ### Fixed
