@@ -4,7 +4,7 @@ All notable changes to the "slurm-devcontainer" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [v0.1.0]
+## [v0.1.0] - 2026-10-26
 
 ### Added
 
