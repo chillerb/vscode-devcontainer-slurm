@@ -28,12 +28,13 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] `session.ts` + commands: Open, Add, Connect, Stop, Remove, Show Job Log
 - [x] Container-window behaviour: install `customizations.vscode.extensions`; Stop from inside the container
 - [x] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
-- [x] Optional persistent container home (`apptainer.persistentHome`, `persistentHomePath`) for `--containall`; README sections on isolation and Apptainer vs. Docker
+- [x] Isolated by default: `--containall` plus a managed persistent `--workdir` (`apptainer.persistentWorkdir`, `persistentWorkdirPath`; replaces 0.2.0's `persistentHome`), conflict check with `--workdir` in `runArgs`; README sections on isolation and Apptainer vs. Docker
 - [x] Packaging: publisher `chillerb`, MIT license, repository links, preview flag, `.vscodeignore`; CI and release workflow (VS Code Marketplace); `VSCE_PAT` secret added
 
 ## Future
 
-- Optional persistent Apptainer overlay per project (`apptainer overlay create --size <MB> overlay.img`, then `--overlay overlay.img`) as an alternative to `persistentHome`: makes the whole container file system writable and persistent. Caveats: only one container may use an overlay image read-write at a time (fits one job per project), fixed size, needs overlay support on the site (unprivileged: fuse-overlayfs/fuse2fs), and image-owned paths such as `/home/vscode` stay unwritable for the user's UID
+- Rethink the isolation/config options: experienced Apptainer users may prefer passing flags directly, while beginners want a single isolation on/off switch (e.g. `isolation: true|false` mapping to `--containall` + managed workdir, with raw `runArgs` as an escape hatch)
+- Optional persistent Apptainer overlay per project (`apptainer overlay create --size <MB> overlay.img`, then `--overlay overlay.img`) as an alternative to `persistentWorkdir`: makes the whole container file system writable and persistent. Caveats: only one container may use an overlay image read-write at a time (fits one job per project), fixed size, needs overlay support on the site (unprivileged: fuse-overlayfs/fuse2fs), and image-owned paths such as `/home/vscode` stay unwritable for the user's UID
 - Tell the user when a cancelled connect leaves a pending job in the queue (offer Stop)
 
 - Sidebar tree view of known devcontainers (job state, Connect/Stop buttons)

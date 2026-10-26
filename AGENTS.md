@@ -45,7 +45,7 @@ Track your todos in the `TODO.md` file.
   - `containerWindow.ts`: installs `customizations.vscode.extensions`.
 - **State:**
   - local: `~/.ssh/slurm-devcontainer/` holds `config`, a key pair and `known_hosts`;
-  - cluster: `~/.slurm-devcontainer/` holds `ssh/` (sshd host key, `authorized_keys`), `sessions/<project>/` (generated files, `job.log`, `connection`) and `home/<project>/` (optional persistent container home).
+  - cluster: `~/.slurm-devcontainer/` holds `ssh/` (sshd host key, `authorized_keys`), `sessions/<project>/` (generated files, `job.log`, `connection`) and `work/<project>/` (persistent Apptainer workdir: the container's `/tmp`, `/var/tmp` and home).
 
 ## Decisions (agreed with the user; keep unless they reopen them)
 
@@ -54,7 +54,8 @@ Track your todos in the `TODO.md` file.
 - **Naming:**
   - The extension identity is `chillerb.remote-slurm-containers`, with display name "Slurm Dev Containers" and command/setting prefix `remoteSlurmContainers.*`.
   - The config `.slurm-devcontainer/slurm-devcontainer.json`, the host aliases `slurm-devcontainer-*` and the cluster/local folders deliberately keep the `slurm-devcontainer` stem, just as Microsoft's `remote-containers` kept `.devcontainer`.
-- **No automatic magic for Apptainer flags.** Users pass flags via `apptainer.runArgs`. `apptainer.persistentHome` is an explicit option (needed with `--contain`/`--containall`) rather than something derived from `runArgs`.
+- **Isolated by default:** `apptainer.runArgs` defaults to `["--containall"]` and `apptainer.persistentWorkdir` to `true` (a managed `--workdir` per project), as Dev Containers users expect. An explicit `runArgs` replaces the default entirely.
+- **No automatic magic for Apptainer flags:** nothing is derived from `runArgs` (no detection of `--contain`). The only check is a conflict error when `runArgs` contains `--workdir` while `persistentWorkdir` is on. Rethinking the options (a beginner-friendly isolation switch vs. raw flags for experts) is a Future TODO.
 - **Published on the VS Code Marketplace only.** Open VSX lacks Microsoft's Remote-SSH; see `TODO.md`.
 
 ## Pitfalls we ran into
@@ -65,7 +66,7 @@ Track your todos in the `TODO.md` file.
 - **Slurm:**
   - Only pending/running jobs count as active; a cancelled job stays visible as COMPLETING for a few seconds.
   - `squeue -j` fails with "Invalid job id" once a job has left the queue. Other squeue errors are transient and retried.
-- **Apptainer:** it is not an isolation sandbox by default (same user, node hostname/network, home, `/tmp` and admin `bind path`s are visible). With `--contain`/`--containall`, home and `/tmp` are a tmpfs limited by `sessiondir max size` (64 MiB by default), too small for the VS Code server, hence `persistentHome`.
+- **Apptainer:** it is not an isolation sandbox by default (same user, node hostname/network, home, `/tmp` and admin `bind path`s are visible). With `--contain`/`--containall`, home and `/tmp` are a tmpfs limited by `sessiondir max size` (64 MiB by default). The VS Code CLI downloads the server archive into `/tmp`, so a persistent `--home` is not enough (0.2.0's `persistentHome` failed with "No space left on device"). A disk-backed `--workdir` fixes both, because with `--contain` it also hosts the home. Hence `persistentWorkdir`. The image's own `/home/vscode` is no alternative: the SIF is read-only and owned by another UID.
 - **Logins with a port** must be passed as `ssh://user@host:port`, because ssh rejects `host:port` as a destination.
 - **The UI extension cannot see extensions installed on the remote server** (`vscode.extensions.getExtension`), so the registry remembers what it installed.
 - **Marketplace:**
