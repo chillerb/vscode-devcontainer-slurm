@@ -120,8 +120,9 @@ export function parseConfig(text: string, vars: ConfigVariables): DevcontainerCo
 			throw new ConfigError(`${CONFIG_FILE}: "apptainer.${key}" was replaced by "apptainer.persistentWorkdir"${key === 'persistentHomePath' ? ' and "apptainer.persistentWorkdirPath"' : ''}`);
 		}
 	}
-	const runArgs = optStringArray(apptainer, 'runArgs', 'apptainer.runArgs').map(subst);
-	const persistentWorkdir = optBoolean(apptainer, 'persistentWorkdir', 'apptainer.persistentWorkdir') ?? false;
+	// Isolated by default, as Dev Containers users expect. An explicit "runArgs" replaces the default entirely.
+	const runArgs = 'runArgs' in apptainer ? optStringArray(apptainer, 'runArgs', 'apptainer.runArgs').map(subst) : ['--containall'];
+	const persistentWorkdir = optBoolean(apptainer, 'persistentWorkdir', 'apptainer.persistentWorkdir') ?? true;
 	const persistentWorkdirPath = mapOptional(optString(apptainer, 'persistentWorkdirPath', 'apptainer.persistentWorkdirPath'), subst);
 	if (persistentWorkdirPath !== undefined) {
 		if (!persistentWorkdir) {
@@ -359,15 +360,17 @@ export function configTemplate(name: string): string {
 	"apptainer": {
 		// Environment modules loaded before running apptainer, e.g. ["apptainer"].
 		"modules": [],
-		// Extra arguments for "apptainer instance start", e.g. ["--nv"] for NVIDIA GPUs,
-		// or ["--containall"] to isolate the container from your home directory and the host.
-		"runArgs": [],
+		// Extra arguments for "apptainer instance start". "--containall" isolates the container from your
+		// home directory, the host's /tmp, the admins' bind paths and the host's processes. Keep it when
+		// adding flags, e.g. ["--containall", "--nv"] for NVIDIA GPUs. Use [] for an unisolated container
+		// that sees your home directory and the host's paths.
+		"runArgs": ["--containall"],
 		// Keep the container's /tmp, /var/tmp and home in a persistent directory on disk (apptainer --workdir).
 		// Needed with "--contain"/"--containall": otherwise they live on a tiny temporary filesystem
 		// (64 MiB by default), too small for the VS Code server and lost after every job. With a persistent
 		// workdir, the VS Code server and extensions are downloaded only once. It has no effect without
 		// "--contain"/"--containall". Set it to false if you pass your own --workdir in "runArgs".
-		"persistentWorkdir": false
+		"persistentWorkdir": true
 		// Optional location; default: ~/.slurm-devcontainer/work/<project> on the cluster.
 		// "persistentWorkdirPath": "~/containers/\${localWorkspaceFolderBasename}"
 	}

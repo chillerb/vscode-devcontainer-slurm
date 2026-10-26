@@ -98,11 +98,12 @@
 				"runArgs": {
 					"type": "array",
 					"items": { "type": "string" },
-					"description": "Extra arguments for \"apptainer instance start\", e.g. [\"--nv\"] or [\"--containall\"]."
+					"default": ["--containall"],
+					"description": "Extra arguments for \"apptainer instance start\". Default [\"--containall\"] (isolated). Keep --containall when adding flags, e.g. [\"--containall\", \"--nv\"]; use [] for an unisolated container."
 				},
 				"persistentWorkdir": {
 					"type": "boolean",
-					"default": false,
+					"default": true,
 					"description": "Pass a persistent apptainer --workdir. With --contain/--containall, the container's /tmp, /var/tmp and home live there on disk instead of on a tiny temporary filesystem, so the VS Code server can be downloaded and is kept across jobs. No effect without --contain/--containall; conflicts with --workdir in runArgs."
 				},
 				"persistentWorkdirPath": {

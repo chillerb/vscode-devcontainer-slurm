@@ -58,7 +58,7 @@ printf 'ARG:%s\\n' "$@"
 			containerEnv: { FOO: "it's here" },
 			mounts: ['source=/scratch,target=/scratch,readonly'],
 			slurm: { partition: 'gpu', gpus: 1, time: '01:00:00', sbatchArgs: ['--qos=short'] },
-			apptainer: { binary: path.join(bin, 'apptainer'), runArgs: ['--nv'] },
+			apptainer: { binary: path.join(bin, 'apptainer'), runArgs: ['--nv'], persistentWorkdir: false },
 			connection: { sshdPath: path.join(bin, 'fake-sshd') },
 		}), { localWorkspaceFolder: project, localEnv: {} });
 		ctx = {

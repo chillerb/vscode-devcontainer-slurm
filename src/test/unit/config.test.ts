@@ -14,7 +14,7 @@ suite('config', () => {
 			partition: undefined, time: undefined, cpusPerTask: undefined, mem: undefined, gpus: undefined,
 			account: undefined, qos: undefined, constraint: undefined, sbatchArgs: [],
 		});
-		assert.deepStrictEqual(config.apptainer, { binary: 'apptainer', modules: [], runArgs: [], persistentWorkdir: false, persistentWorkdirPath: undefined });
+		assert.deepStrictEqual(config.apptainer, { binary: 'apptainer', modules: [], runArgs: ['--containall'], persistentWorkdir: true, persistentWorkdirPath: undefined });
 		assert.deepStrictEqual(config.connection, { type: 'sshd', sshdPath: '/usr/sbin/sshd' });
 	});
 
@@ -52,15 +52,26 @@ suite('config', () => {
 		assert.strictEqual(apptainer({ persistentWorkdir: true }).persistentWorkdirPath, undefined);
 		assert.strictEqual(apptainer({ persistentWorkdir: true, persistentWorkdirPath: '~/c/${localWorkspaceFolderBasename}' }).persistentWorkdirPath, '~/c/my-project');
 		assert.strictEqual(apptainer({ persistentWorkdir: true, persistentWorkdirPath: '/scratch/${localEnv:USER}/w' }).persistentWorkdirPath, '/scratch/jdoe/w');
-		assert.throws(() => apptainer({ persistentWorkdirPath: '/x' }), /requires "apptainer.persistentWorkdir": true/);
+		assert.throws(() => apptainer({ persistentWorkdir: false, persistentWorkdirPath: '/x' }), /requires "apptainer.persistentWorkdir": true/);
+		assert.strictEqual(apptainer({ persistentWorkdirPath: '/x' }).persistentWorkdirPath, '/x');
 		assert.throws(() => apptainer({ persistentWorkdir: true, persistentWorkdirPath: 'rel/x' }), /absolute path or start with ~\//);
 		assert.throws(() => apptainer({ persistentWorkdir: 'yes' }), /must be true or false/);
+	});
+
+	test('isolates containers by default', () => {
+		const apptainer = (options: object) => parseConfig(JSON.stringify({ image: 'x', apptainer: options }), vars).apptainer;
+		assert.deepStrictEqual(apptainer({ runArgs: [] }).runArgs, []);
+		assert.deepStrictEqual(apptainer({ runArgs: ['--nv'] }).runArgs, ['--nv']);
+		assert.strictEqual(apptainer({ persistentWorkdir: false }).persistentWorkdir, false);
+		const template = parseConfig(configTemplate('demo'), vars).apptainer;
+		assert.deepStrictEqual([template.runArgs, template.persistentWorkdir], [['--containall'], true]);
 	});
 
 	test('rejects a --workdir in runArgs together with persistentWorkdir', () => {
 		const apptainer = (options: object) => parseConfig(JSON.stringify({ image: 'x', apptainer: options }), vars).apptainer;
 		for (const runArgs of [['--workdir', '/w'], ['--workdir=/w'], ['-W', '/w']]) {
 			assert.throws(() => apptainer({ persistentWorkdir: true, runArgs }), /conflicts with "apptainer.persistentWorkdir"/, runArgs.join(' '));
+			assert.throws(() => apptainer({ runArgs }), /conflicts/, 'persistentWorkdir is on by default');
 			assert.deepStrictEqual(apptainer({ persistentWorkdir: false, runArgs }).runArgs, runArgs);
 		}
 	});
