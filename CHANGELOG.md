@@ -4,6 +4,18 @@ All notable changes to the "remote-slurm-containers" extension will be documente
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.3.0] - 2026-10-26
+
+### Changed
+
+- Containers are isolated by default: `apptainer.runArgs` defaults to `["--containall"]` and `apptainer.persistentWorkdir` to `true`. Use `"runArgs": []` and `"persistentWorkdir": false` for an unisolated container.
+- **Breaking:** `apptainer.persistentHome`/`persistentHomePath` are replaced by `apptainer.persistentWorkdir`/`persistentWorkdirPath`. The persistent `--workdir` (default `~/.slurm-devcontainer/work/<project>`) holds the container's `/tmp`, `/var/tmp` and home. A config using the old options reports the new names. The old `~/.slurm-devcontainer/home/<project>` folder can be deleted.
+
+### Fixed
+
+- `--containall` containers can now download the VS Code server. It was downloaded via `/tmp`, which stayed on Apptainer's small temporary filesystem.
+- A `--workdir` in `runArgs` together with `persistentWorkdir` is reported as a configuration error.
+
 ## [v0.2.0] - 2026-10-26
 
 ### Added
