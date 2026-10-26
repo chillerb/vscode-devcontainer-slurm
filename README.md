@@ -176,6 +176,10 @@ Log in once in a terminal (`ssh my-cluster`). Afterwards the extension and Remot
 - **Extensions fail to install in the container.** Compute nodes often have no internet access. Set `"remote.downloadExtensionsLocally": true` so VS Code downloads extensions on your computer and uploads them.
 - The extension's output channel is **Output → Slurm Dev Containers**, and it contains the details of every step.
 
+## Related projects
+
+- [gmertes/vscode-remote-hpc](https://github.com/gmertes/vscode-remote-hpc): a script-based setup that connects VS Code's Remote-SSH to a Slurm compute node via an sshd started in a batch job. It uses the same connection idea, without containers.
+
 ## Development
 
 ```sh
