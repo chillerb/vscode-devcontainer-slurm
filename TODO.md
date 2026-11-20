@@ -10,7 +10,6 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 
 ## Planned (MVP)
 
-- [ ] Manual end-to-end test on a real Slurm cluster (needs the user): F5, Open Folder in Container, reconnect from a local window, Stop
 - [ ] Integration tests (`npm test`): the template test is still a placeholder. The runner cannot unpack VS Code in this devcontainer, and it must install Remote-SSH because of `extensionDependencies`
 - [ ] Before 1 Dec 2026: migrate Marketplace publishing from the global PAT to Entra ID (`azure/login` with GitHub OIDC + `vsce publish --azure-credential`); global Azure DevOps PATs stop working then
 
@@ -30,6 +29,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] README (requirements, setup, Include consent, ControlMaster/2FA, troubleshooting) + CHANGELOG
 - [x] Isolated by default: `--containall` plus a managed persistent `--workdir` (`apptainer.persistentWorkdir`, `persistentWorkdirPath`; replaces 0.2.0's `persistentHome`), conflict check with `--workdir` in `runArgs`; README sections on isolation and Apptainer vs. Docker
 - [x] Packaging: publisher `chillerb`, MIT license, repository links, preview flag, `.vscodeignore`; CI and release workflow (VS Code Marketplace); `VSCE_PAT` secret added
+- [x] Manual end-to-end test on real Slurm clusters: the published extension starts and connects to containers on two clusters
 
 ## Future
 
@@ -41,6 +41,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - Askpass integration (VS Code input boxes) for password/2FA logins
 - Status bar with remaining walltime and a warning before the time limit
 - More connection strategies: `computeSsh` (pam_slurm_adopt + RemoteCommand), `tunnel` (`code tunnel`), a static ProxyCommand relay (keeps VS Code's native "Open Recent" working across jobs)
+- Connection strategy `sshdInContainer`: start sshd inside the instance (`apptainer exec instance://… sshd`) instead of on the host, so no `ForceCommand`/`enter.sh` is needed. Only works for images that ship `openssh-server`, so it stays opt-in; the host sshd + `enter.sh` remains the default because it works with any image
 - Research: a Dev Containers-like remote authority resolver (proposed API) with `srun --overlap` as transport
 - Fall back to `.devcontainer/devcontainer.json` + `customizations.slurm`
 - Pre-pull/convert `docker://` images to a cached SIF on the login node; build from Dockerfile or `.def`
