@@ -64,7 +64,8 @@
         "remoteSlurmContainers.sshPath": {
           "type": "string",
           "default": "ssh",
-          "description": "Path to the local ssh executable used to run commands on the cluster login node."
+          "scope": "application",
+          "description": "Path to the local ssh executable used to run commands on the cluster login node. User settings only: projects can't change which local program is run."
         },
         "remoteSlurmContainers.openInNewWindow": {
           "type": "boolean",
@@ -77,12 +78,14 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Folders on your local computer (where VS Code runs, not the cluster) with your own configuration templates for **Add Configuration File...**. Each subfolder containing a `slurmtainer.json` is a template; all its files are copied. A template named `default` replaces the built-in starter. `~/` is expanded. Usually set in your user settings; workspace settings can override it."
+          "scope": "application",
+          "markdownDescription": "Folders on your local computer (where VS Code runs, not the cluster) with your own configuration templates for **Add Configuration File...**. Each subfolder containing a `slurmtainer.json` is a template; all its files are copied. A template named `default` replaces the built-in starter. `~/` is expanded. User settings only: projects can't choose which local folders are read."
         },
         "remoteSlurmContainers.forwardSshAgent": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Forward your local SSH agent into the containers, so that e.g. `git` over SSH works inside them. Sets `ForwardAgent yes` for the container hosts and mounts the compute node's agent socket directories (`/tmp` and `~/.ssh/agent`) at `/mnt/slurmtainer/` in the container. Takes effect for newly started jobs. While you are connected, root on the compute node can use your agent."
+          "scope": "application",
+          "markdownDescription": "Forward your local SSH agent into the containers, so that e.g. `git` over SSH works inside them. Sets `ForwardAgent yes` for the container hosts and mounts the compute node's agent socket directories (`/tmp` and `~/.ssh/agent`) at `/mnt/slurmtainer/` in the container. Takes effect for newly started jobs. While you are connected, root on the compute node can use your agent. User settings only: projects can't turn it on."
         },
         "remoteSlurmContainers.connectTimeoutMinutes": {
           "type": "number",

@@ -182,7 +182,7 @@ Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"pers
 
 ## Settings
 
-All settings describe your computer, so set them in your **user settings**. Workspace settings can override them for a project.
+All settings describe your computer, so set them in your **user settings**. `sshPath`, `templateDirectories` and `forwardSshAgent` can only be set there: in a Remote-SSH window, workspace settings come from the project on the cluster, and a project must not choose which local program runs, which local folders are read, or whether your SSH agent is forwarded. `openInNewWindow` and `connectTimeoutMinutes` can also be overridden per workspace.
 
 | Setting | Default | Description |
 |---|---|---|
