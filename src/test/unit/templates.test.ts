@@ -65,4 +65,19 @@ suite('templates', () => {
 			assert.ok(validConfigName(bad), bad);
 		}
 	});
+
+	test('follows symlinked templates and files', async () => {
+		write('dotfiles/lab/slurmtainer.json');
+		write('dotfiles/lab/image.def');
+		write('dotfiles/shared.json');
+		fs.mkdirSync(path.join(tmp, 'mine'));
+		fs.symlinkSync(path.join(tmp, 'dotfiles', 'lab'), path.join(tmp, 'mine', 'lab'));
+		write('mine/own/README.md');
+		fs.symlinkSync(path.join(tmp, 'dotfiles', 'shared.json'), path.join(tmp, 'mine', 'own', 'slurmtainer.json'));
+		fs.symlinkSync(path.join(tmp, 'missing'), path.join(tmp, 'mine', 'own', 'dangling'));
+		const templates = await listTemplates(path.join(tmp, 'none'), [path.join(tmp, 'mine')]);
+		assert.deepStrictEqual(templates.map(t => t.name), ['lab', 'own']);
+		assert.deepStrictEqual(await templateFiles(path.join(tmp, 'mine', 'lab')), ['slurmtainer.json', 'image.def']);
+		assert.deepStrictEqual(await templateFiles(path.join(tmp, 'mine', 'own')), ['slurmtainer.json', 'README.md']);
+	});
 });

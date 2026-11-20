@@ -25,14 +25,14 @@ export async function listTemplates(builtinDir: string, userDirs: string[], onEr
 	for (const [dir, source] of [...userDirs.map(d => [d, d]), [builtinDir, 'built-in']]) {
 		let names: string[];
 		try {
-			names = (await fs.readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
+			names = (await fs.readdir(dir)).sort();
 		} catch (e) {
 			onError(`cannot read template directory ${dir}: ${e instanceof Error ? e.message : String(e)}`);
 			continue;
 		}
 		for (const name of names) {
 			const templateDir = path.join(dir, name);
-			if (!found.has(name) && await isFile(path.join(templateDir, CONFIG_NAME))) {
+			if (!found.has(name) && await isDirectory(templateDir) && await isFile(path.join(templateDir, CONFIG_NAME))) {
 				found.set(name, { name, source, dir: templateDir });
 			}
 		}
@@ -44,11 +44,13 @@ export async function listTemplates(builtinDir: string, userDirs: string[], onEr
 export async function templateFiles(dir: string): Promise<string[]> {
 	const files: string[] = [];
 	const walk = async (rel: string) => {
-		for (const entry of await fs.readdir(path.join(dir, rel), { withFileTypes: true })) {
-			const child = rel ? `${rel}/${entry.name}` : entry.name;
-			if (entry.isDirectory()) {
+		for (const name of await fs.readdir(path.join(dir, rel))) {
+			const child = rel ? `${rel}/${name}` : name;
+			// stat (not the readdir entry type) so that symlinked files and folders, e.g. from a dotfiles repo, count.
+			const stat = await fs.stat(path.join(dir, ...child.split('/'))).catch(() => undefined);
+			if (stat?.isDirectory()) {
 				await walk(child);
-			} else if (entry.isFile()) {
+			} else if (stat?.isFile()) {
 				files.push(child);
 			}
 		}
@@ -63,6 +65,10 @@ export function validConfigName(name: string): string | undefined {
 		return 'Use letters, digits, ".", "_" and "-" (starting with a letter or digit)';
 	}
 	return undefined;
+}
+
+async function isDirectory(p: string): Promise<boolean> {
+	return fs.stat(p).then(s => s.isDirectory(), () => false);
 }
 
 async function isFile(p: string): Promise<boolean> {
