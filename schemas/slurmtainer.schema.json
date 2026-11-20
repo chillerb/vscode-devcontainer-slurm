@@ -108,7 +108,7 @@
 				},
 				"persistentWorkdirPath": {
 					"type": "string",
-					"description": "Location of the persistent workdir on the cluster (absolute or ~/...). Default: ~/.slurmtainer/work/<project>. Requires persistentWorkdir: true."
+					"description": "Location of the persistent workdir on the cluster (absolute or ~/...). Default: ~/.slurmtainer/work/<project> (<project>-<config> for a named configuration). Requires persistentWorkdir: true."
 				}
 			}
 		},

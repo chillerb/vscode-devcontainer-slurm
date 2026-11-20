@@ -46,7 +46,7 @@ Track your todos in the `TODO.md` file.
   - `containerWindow.ts`: installs `customizations.vscode.extensions`.
 - **State:**
   - local: `~/.ssh/slurmtainer/` holds `config`, a key pair and `known_hosts`;
-  - cluster: `~/.slurmtainer/` holds `ssh/` (sshd host key, `authorized_keys`), `sessions/<project>/` (generated files, `job.log`, `connection`) and `work/<project>/` (persistent Apptainer workdir: the container's `/tmp`, `/var/tmp` and home).
+  - cluster: `~/.slurmtainer/` holds `ssh/` (sshd host key, `authorized_keys`), `sessions/<session>/` (generated files, `job.log`, `connection`, `project` = owning config file) and `work/<session>/` (persistent Apptainer workdir: the container's `/tmp`, `/var/tmp` and home).
 
 ## Decisions (agreed with the user; keep unless they reopen them)
 

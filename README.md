@@ -112,7 +112,7 @@ You can add your own templates, e.g. for your group's images and partitions. A t
 ├── pytorch/slurmtainer.json
 └── my-lab/
     ├── slurmtainer.json
-    └── image.def          # referenced by a relative path in slurmtainer.json
+    └── image.def          # e.g. a build recipe for the image, copied along (not used by the extension)
 ```
 
 The folder name is the template name; a template named `default` replaces the built-in starter. The command asks whether to create the default configuration or a named one (`.slurmtainer/<name>/`), and never overwrites existing files. Templates can use variables such as `${localWorkspaceFolderBasename}`, also in `"name"`; they are resolved when connecting.
@@ -131,7 +131,7 @@ Containers are **isolated by default**, as you know it from Dev Containers. The 
 
 **What is hidden:** your real home directory (including SSH keys and dotfiles), the host's `/tmp`, the admin-configured bind paths, the host's processes (own PID namespace), and the host environment.
 
-**The persistent workdir:** with `--containall`, Apptainer would keep the container's home and `/tmp` on a small temporary filesystem (64 MiB by default). That is too small for the VS Code server, whose download goes through `/tmp`, and it is lost after every job. `persistentWorkdir` passes Apptainer's `--workdir` with a directory on the cluster, by default `~/.slurmtainer/work/<project>`. It holds the container's `/tmp`, `/var/tmp` and home. The container home appears at your normal home path but starts empty (`ls -a ~` shows `.vscode-server` after the first connect). The VS Code server and extensions are downloaded once and kept across jobs.
+**The persistent workdir:** with `--containall`, Apptainer would keep the container's home and `/tmp` on a small temporary filesystem (64 MiB by default). That is too small for the VS Code server, whose download goes through `/tmp`, and it is lost after every job. `persistentWorkdir` passes Apptainer's `--workdir` with a directory on the cluster, by default `~/.slurmtainer/work/<project>` (`<project>-<config>` for a named configuration). It holds the container's `/tmp`, `/var/tmp` and home. The container home appears at your normal home path but starts empty (`ls -a ~` shows `.vscode-server` after the first connect). The VS Code server and extensions are downloaded once and kept across jobs.
 
 - **Downloading the server** needs internet access on the compute node. Otherwise set `"remote.SSH.localServerDownload": "always"` so VS Code downloads it on your computer.
 - **Proxies:** `--containall` also clears the environment. If your site uses a proxy, pass it in: `"containerEnv": { "https_proxy": "${localEnv:https_proxy}" }`.
@@ -202,8 +202,10 @@ All settings describe your computer, so set them in your **user settings**. `ssh
 
 **On the cluster** (in your home directory)
 - `~/.slurmtainer/ssh/` holds the sshd host key and an `authorized_keys` file containing only the extension's public key.
-- `~/.slurmtainer/work/<project>/` is the container's persistent workdir (`/tmp`, `/var/tmp` and home), with `persistentWorkdir: true` (the default) and no `persistentWorkdirPath`.
-- `~/.slurmtainer/sessions/<project>/` holds the generated `job.sh`, `sshd_config` and `enter.sh`, plus `job.log` and the current `connection` details.
+- `~/.slurmtainer/work/<session>/` is the container's persistent workdir (`/tmp`, `/var/tmp` and home), with `persistentWorkdir: true` (the default) and no `persistentWorkdirPath`.
+- `~/.slurmtainer/sessions/<session>/` holds the generated `job.sh`, `sshd_config` and `enter.sh`, plus `job.log` and the current `connection` details.
+
+`<session>` is the project folder name, plus `-<config>` for a named configuration (`my-project-gpu`), plus `-2`, `-3`… if that name is already taken on the cluster.
 
 ## Upgrading from 0.3.x
 
@@ -211,7 +213,7 @@ Version 0.4.0 renamed everything from `slurm-devcontainer` to `slurmtainer` and 
 
 1. Before upgrading, stop running jobs with **Stop Container Job...**. Jobs started by 0.3.x are not found by 0.4.0.
 2. In each project, rename `.slurm-devcontainer/slurm-devcontainer.json` to `.slurmtainer/slurmtainer.json`. The extension tells you if it finds a file at the old location.
-3. Optional: on each cluster, run `mv ~/.slurm-devcontainer ~/.slurmtainer` to keep the persistent workdirs (container home, VS Code server). Otherwise the new version starts with empty ones.
+3. Optional: on each cluster, **before connecting with the new version**, run `mv ~/.slurm-devcontainer ~/.slurmtainer` to keep the persistent workdirs (container home, VS Code server). Otherwise the new version starts with empty ones.
 4. On your computer, the extension asks once more for an `Include` line, now `Include ~/.ssh/slurmtainer/config`. You can remove the old `Include ~/.ssh/slurm-devcontainer/config` line and the `~/.ssh/slurm-devcontainer/` folder.
 5. The list of known containers starts empty. Open each project again with **Open Folder in Container**.
 

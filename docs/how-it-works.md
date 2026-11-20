@@ -131,9 +131,10 @@ Everything below runs in a single SSH call with `set -euo pipefail` and `umask 0
    `squeue -u $USER -n slurmtainer-<session> -t PENDING,CONFIGURING,RUNNING,SUSPENDED`. Only pending
    or running jobs count; a cancelled job stays visible as COMPLETING for a few seconds and must not be
    reused.
-3. **Ownership check:** `$sdir/project` records which project path owns the session. If a job is active and
-   the file names a different project, the script stops with an error. Otherwise it writes the current path
-   into the file.
+3. **Ownership check:** `$sdir/project` records which configuration file (absolute path) owns the session.
+   If a job is active and the file names a different project or configuration, the script stops with an
+   error. Otherwise it writes the current path into the file. (A file written by 0.4.0 holds only the
+   project path and is accepted for that project.)
 4. **Reuse or submit:**
    - If a job exists, it reports `reusing=<id>` and **does not rewrite any files**. Config changes only take
      effect after you stop the job and connect again.
@@ -356,7 +357,7 @@ compared to earlier versions.
 ~/.slurmtainer/
 ├── ssh/host_ed25519{,.pub}, authorized_keys     # shared by all sessions on this cluster
 ├── sessions/<session>/
-│   ├── project        # owning project path (collision check)
+│   ├── project        # owning configuration file (collision check)
 │   ├── job.sh, sshd_config, enter.sh            # written only when a new job is submitted
 │   ├── job.log        # sbatch --output
 │   └── connection     # job=, node=, apptainer=, port=  (created by the job, removed on exit)
