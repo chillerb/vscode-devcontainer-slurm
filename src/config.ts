@@ -88,10 +88,19 @@ export function configFromPath(relPath: string): string | undefined {
 	return m ? m[1] : undefined;
 }
 
-/** The `"name"` of a configuration, if it can be read without full validation (for pick lists). */
-export function configDisplayName(text: string): string | undefined {
+/**
+ * The `"name"` of a configuration with `${localWorkspaceFolder…}` and `${localEnv:…}` resolved, if it can be read
+ * without full validation (for pick lists).
+ */
+export function configDisplayName(text: string, vars: ConfigVariables): string | undefined {
 	const raw: unknown = jsonc.parse(text, [], { allowTrailingComma: true });
-	return isObject(raw) && typeof raw['name'] === 'string' && raw['name'] ? raw['name'] : undefined;
+	if (!isObject(raw) || typeof raw['name'] !== 'string' || !raw['name']) {
+		return undefined;
+	}
+	return substitute(raw['name'], {
+		localWorkspaceFolder: vars.localWorkspaceFolder,
+		localWorkspaceFolderBasename: path.posix.basename(vars.localWorkspaceFolder),
+	}, vars.localEnv);
 }
 
 /**

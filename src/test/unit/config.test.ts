@@ -117,9 +117,10 @@ suite('config', () => {
 		assert.strictEqual(configFromPath('.slurmtainer/gpu/slurmtainer.json'), 'gpu');
 		assert.strictEqual(configFromPath('.slurmtainer/a/b/slurmtainer.json'), undefined);
 		assert.strictEqual(configFromPath('other.json'), undefined);
-		assert.strictEqual(configDisplayName('// c\n{ "name": "GPU", }'), 'GPU');
-		assert.strictEqual(configDisplayName('{ "name": 1 }'), undefined);
-		assert.strictEqual(configDisplayName('not json'), undefined);
+		assert.strictEqual(configDisplayName('// c\n{ "name": "GPU", }', vars), 'GPU');
+		assert.strictEqual(configDisplayName('{ "name": "${localWorkspaceFolderBasename} on ${localEnv:USER}" }', vars), 'my-project on jdoe');
+		assert.strictEqual(configDisplayName('{ "name": 1 }', vars), undefined);
+		assert.strictEqual(configDisplayName('not json', vars), undefined);
 	});
 
 	test('named configurations: error prefix and relative images', () => {

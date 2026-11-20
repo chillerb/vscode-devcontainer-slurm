@@ -77,11 +77,14 @@ export class Sessions {
 		if (configs.length === 1) {
 			return configs[0];
 		}
+		// The folder name is unique; the "name" (e.g. the starter template's ${localWorkspaceFolderBasename}) may not be.
+		const vars = { localWorkspaceFolder: projectPath, localEnv: probe.env };
 		const picked = await vscode.window.showQuickPick(configs.map(c => ({
-			label: configDisplayName(c.text) ?? (c.config || 'default'),
-			description: c.relPath,
+			label: c.config || 'default',
+			description: configDisplayName(c.text, vars),
+			detail: c.relPath,
 			probed: c,
-		})), { title: `Select a configuration for ${path.posix.basename(projectPath)}`, matchOnDescription: true });
+		})), { title: `Select a configuration for ${path.posix.basename(projectPath)}`, matchOnDescription: true, matchOnDetail: true });
 		return picked?.probed;
 	}
 

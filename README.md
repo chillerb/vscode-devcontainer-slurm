@@ -95,7 +95,7 @@ Like Dev Containers, a project can have more than one configuration, for example
 └── large-mem/slurmtainer.json
 ```
 
-When there are several, **Open Folder in Container** asks which one to use. The list shows each configuration's `"name"`. Each configuration is a separate dev container with its own job, host entry and persistent workdir; **Connect to Container...** lists them as `my-project (gpu)`. Relative image paths are resolved against the folder of the configuration file.
+When there are several, **Open Folder in Container** asks which one to use. The list shows each configuration by its folder name (`default` for `.slurmtainer/slurmtainer.json`), together with its `"name"`. Each configuration is a separate dev container with its own job, host entry and persistent workdir; **Connect to Container...** lists them as `my-project (gpu)`. Relative image paths are resolved against the folder of the configuration file.
 
 ### Templates
 
