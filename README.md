@@ -101,7 +101,7 @@ When there are several, **Open Folder in Container** asks which one to use. The 
 
 **Add Configuration File...** creates a configuration from a template. Only one template is built in: `default`, a commented starter configuration listing all options.
 
-You can add your own templates, e.g. for your group's images and partitions. A template is a folder containing a `slurmtainer.json` and optionally more files, for example an Apptainer `.def` file or a script; all of them are copied. Put template folders into a directory on your computer and list it in the settings:
+You can add your own templates, e.g. for your group's images and partitions. A template is a folder containing a `slurmtainer.json` and optionally more files, for example an Apptainer `.def` file or a script; all of them are copied. Put template folders into a directory on your computer (where VS Code runs, not the cluster) and list it in your user settings (**Preferences: Open User Settings (JSON)**):
 
 ```jsonc
 "remoteSlurmContainers.templateDirectories": ["~/slurmtainer-templates"]
@@ -147,7 +147,7 @@ Containers are **isolated by default**, as you know it from Dev Containers. The 
 
 ### SSH agent forwarding (git over SSH)
 
-Your SSH keys are not in the container. To use them, e.g. for `git` over SSH, turn on agent forwarding on your computer:
+Your SSH keys are not in the container. To use them, e.g. for `git` over SSH, turn on agent forwarding in your user settings (**Preferences: Open User Settings (JSON)**):
 
 ```jsonc
 "remoteSlurmContainers.forwardSshAgent": true
@@ -181,6 +181,8 @@ Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"pers
 | Add Configuration File... | Creates a commented `.slurmtainer/slurmtainer.json` or a named `.slurmtainer/<name>/slurmtainer.json` from a template (see [Templates](#templates)). |
 
 ## Settings
+
+All settings describe your computer, so set them in your **user settings**. Workspace settings can override them for a project.
 
 | Setting | Default | Description |
 |---|---|---|

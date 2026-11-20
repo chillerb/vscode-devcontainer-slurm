@@ -77,13 +77,11 @@
             "type": "string"
           },
           "default": [],
-          "scope": "machine",
-          "markdownDescription": "Folders on this computer with your own configuration templates for **Add Configuration File...**. Each subfolder containing a `slurmtainer.json` is a template; all its files are copied. A template overrides a built-in one with the same name. `~/` is expanded."
+          "markdownDescription": "Folders on your local computer (where VS Code runs, not the cluster) with your own configuration templates for **Add Configuration File...**. Each subfolder containing a `slurmtainer.json` is a template; all its files are copied. A template named `default` replaces the built-in starter. `~/` is expanded. Usually set in your user settings; workspace settings can override it."
         },
         "remoteSlurmContainers.forwardSshAgent": {
           "type": "boolean",
           "default": false,
-          "scope": "machine",
           "markdownDescription": "Forward your local SSH agent into the containers, so that e.g. `git` over SSH works inside them. Sets `ForwardAgent yes` for the container hosts and mounts the compute node's agent socket directories (`/tmp` and `~/.ssh/agent`) at `/mnt/slurmtainer/` in the container. Takes effect for newly started jobs. While you are connected, root on the compute node can use your agent."
         },
         "remoteSlurmContainers.connectTimeoutMinutes": {
