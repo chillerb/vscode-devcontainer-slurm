@@ -10,6 +10,7 @@ extension-owned files in `~/.ssh/slurmtainer/`. The user's `~/.ssh/config` is on
 
 ## Planned (MVP)
 
+- [ ] Manual test of the 0.4.0 changes on a real cluster (needs the user): old-config hint, several configurations, templates, SSH agent forwarding (`ssh-add -l` and `git ls-remote git@github.com:…` in a container terminal; check both OpenSSH < 10.1 and ≥ 10.1 nodes if available)
 - [ ] Integration tests (`npm test`): the template test is still a placeholder. The runner cannot unpack VS Code in this devcontainer, and it must install Remote-SSH because of `extensionDependencies`
 - [ ] Before 1 Dec 2026: migrate Marketplace publishing from the global PAT to Entra ID (`azure/login` with GitHub OIDC + `vsce publish --azure-credential`); global Azure DevOps PATs stop working then
 
@@ -33,6 +34,7 @@ extension-owned files in `~/.ssh/slurmtainer/`. The user's `~/.ssh/config` is on
 - [x] Rename the `slurm-devcontainer` stem to `slurmtainer` (config, folders, aliases, job/instance names, env vars; display name "Slurmtainer: Slurm Dev Containers"), clean break with a hint for old config locations and README upgrade steps
 - [x] Several configurations per project (`.slurmtainer/<name>/slurmtainer.json`, quick pick, one entry/session/job per configuration)
 - [x] Configuration templates: built-in `default` and `gpu`, own templates from local `templateDirectories`; Add Configuration File creates the default or a named configuration
+- [x] Opt-in SSH agent forwarding into the container (`forwardSshAgent`: `ForwardAgent yes`, socket directories bound at `/run/slurmtainer/`, `SSH_AUTH_SOCK` translated in `enter.sh`)
 
 ## Future
 

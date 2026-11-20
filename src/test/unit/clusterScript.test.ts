@@ -50,6 +50,7 @@ suite('clusterScript', function () {
 		writeExecutable(path.join(bin, 'apptainer'), `#!/bin/bash
 printf '%s\\n' "$@" >> "$HOME/apptainer.log"
 echo "FOO=$APPTAINERENV_FOO"
+echo "SOCK=\${APPTAINERENV_SSH_AUTH_SOCK:-}"
 printf 'ARG:%s\\n' "$@"
 `);
 		writeExecutable(path.join(bin, 'fake-sshd'), '#!/bin/bash\necho "sshd $*"\nexec sleep 30\n');
@@ -349,6 +350,46 @@ echo RUNNING
 			await exited;
 			assert.ok(!fs.existsSync(connection), 'connection file removed on exit');
 			assert.match(fs.readFileSync(path.join(home, 'apptainer.log'), 'utf8'), /instance\nstop\nslurmtainer-7/);
+		} finally {
+			job?.kill('SIGKILL');
+		}
+	});
+
+	test('SSH agent forwarding mounts the socket directories and translates SSH_AUTH_SOCK', async () => {
+		assert.doesNotMatch(jobScript(ctx, sshdStrategy), /host-tmp|\.ssh\/agent|agent=1/);
+		const agentCtx = { ...ctx, forwardSshAgent: true };
+		fs.mkdirSync(ctx.sessionDir, { recursive: true });
+		for (const [name, file] of Object.entries(sshdStrategy.sessionFiles(agentCtx))) {
+			fs.writeFileSync(path.join(ctx.sessionDir, name), file.content, { mode: file.executable ? 0o700 : 0o600 });
+		}
+		const jobFile = path.join(tmp, 'job.sh');
+		fs.writeFileSync(jobFile, jobScript(agentCtx, sshdStrategy));
+		let job: ChildProcess | undefined;
+		try {
+			job = spawn('bash', [jobFile], { env: { ...process.env, HOME: home, SLURM_JOB_ID: '8' }, stdio: 'ignore' });
+			const connection = path.join(ctx.sessionDir, 'connection');
+			await waitFor(() => fs.existsSync(connection), 10000);
+			assert.match(fs.readFileSync(connection, 'utf8'), /^agent=1$/m);
+			assert.strictEqual(fs.statSync(path.join(home, '.ssh', 'agent')).mode & 0o777, 0o700);
+			const started = fs.readFileSync(path.join(home, 'apptainer.log'), 'utf8').split('\n');
+			assert.deepStrictEqual(started.slice(7, 11), [
+				'--bind', '/tmp:/run/slurmtainer/host-tmp', '--bind', `${home}/.ssh/agent:/run/slurmtainer/host-agent`,
+			]);
+
+			const enter = (sock?: string) => {
+				const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, SSH_ORIGINAL_COMMAND: 'true' };
+				delete env.SSH_AUTH_SOCK;
+				if (sock) {
+					env.SSH_AUTH_SOCK = sock;
+				}
+				const result = spawnSync(path.join(ctx.sessionDir, 'enter.sh'), { env, encoding: 'utf8' });
+				assert.strictEqual(result.status, 0, result.stderr);
+				return /^SOCK=(.*)$/m.exec(result.stdout)![1];
+			};
+			assert.strictEqual(enter('/tmp/ssh-AbC123/agent.42'), '/run/slurmtainer/host-tmp/ssh-AbC123/agent.42');
+			assert.strictEqual(enter(`${home}/.ssh/agent/s.xyz.agent.abc`), '/run/slurmtainer/host-agent/s.xyz.agent.abc');
+			assert.strictEqual(enter('/elsewhere/agent.sock'), '');
+			assert.strictEqual(enter(), '');
 		} finally {
 			job?.kill('SIGKILL');
 		}

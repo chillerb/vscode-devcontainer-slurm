@@ -195,9 +195,10 @@ The script starts with the `#SBATCH` directives:
 It then:
 
 1. **Sets variables:** `sdir`, `apptainer` (the binary) and `instance="slurmtainer-$SLURM_JOB_ID"`.
-2. **Prepares the workdir** if `persistentWorkdir` is on: `mkdir -p` and `chmod 700` on the workdir.
+2. **Prepares the workdir** if `persistentWorkdir` is on: `mkdir -p` and `chmod 700` on the workdir. With SSH
+   agent forwarding on, it also creates `~/.ssh/agent` (see [SSH agent forwarding](#ssh-agent-forwarding)).
 3. **Defines `publish_connection key=value…`:** it writes `job=`, `node=` (`$SLURMD_NODENAME`),
-   `apptainer=` (the resolved binary path) and the given pairs to `connection.tmp`, then renames it to
+   `apptainer=` (the resolved binary path), `agent=1` if agent forwarding is on, and the given pairs to `connection.tmp`, then renames it to
    `connection`. The rename is atomic, so the polling loop never sees a half-written file.
 4. **Sets up cleanup** with `trap cleanup EXIT` and `trap 'exit 0' TERM INT`. The cleanup function removes
    `connection` if it still belongs to this job, kills background processes (sshd) and runs
@@ -208,8 +209,10 @@ It then:
 7. **Starts the container:**
    ```
    apptainer instance start <runArgs> [--workdir "$workdir"] \
-     --bind <project>:<workspaceFolder> [--bind src:dst[:ro] …] <image> "$instance"
+     --bind <project>:<workspaceFolder> [--bind src:dst[:ro] …] \
+     [--bind /tmp:/run/slurmtainer/host-tmp --bind ~/.ssh/agent:/run/slurmtainer/host-agent] <image> "$instance"
    ```
+   The last two binds are only added with SSH agent forwarding on.
    The instance runs in the background inside the job's cgroup, so Slurm's resource limits apply to it.
 8. **Hands over to the connection strategy** (`src/connection/sshd.ts`):
    - Up to 20 times: pick a random port between 20000 and 49999. Skip it if something already listens on
@@ -266,8 +269,9 @@ the container. The script:
    the host.
 3. **Passes the environment.** `--containall` implies `--cleanenv`, so `containerEnv` and `remoteEnv` only
    reach the container as `APPTAINERENV_*` variables.
-4. **Sets the working directory** with `--pwd <workspaceFolder>`.
-5. **Runs the requested command or a shell.** Remote-SSH sends commands such as its server setup script
+4. **Points `SSH_AUTH_SOCK` to the forwarded agent** if agent forwarding is on (see below).
+5. **Sets the working directory** with `--pwd <workspaceFolder>`.
+6. **Runs the requested command or a shell.** Remote-SSH sends commands such as its server setup script
    (`SSH_ORIGINAL_COMMAND`). A plain login gets `bash -l`, or `sh` if the image has no bash.
 
 **Why not run sshd inside the container instead?** Then `enter.sh` wouldn't be needed, but every image would
@@ -312,6 +316,26 @@ setup script is sent. The principle stays the same.
   gives you a login shell inside the container.
 - **When the job ends** (time limit or Stop), the instance and sshd are gone, so the window loses its
   connection. Connecting again submits a new job and reuses the server from the workdir.
+
+## SSH agent forwarding
+
+Off by default; the setting `remoteSlurmContainers.forwardSshAgent` turns it on. Three pieces are needed:
+
+1. **Forwarding to the compute node:** the host entry gets `ForwardAgent yes`, so ssh forwards your local
+   agent to the job's sshd. sshd creates a socket for it, in `/tmp/ssh-XXXX/agent.N` (OpenSSH < 10.1) or
+   `~/.ssh/agent/` (OpenSSH ≥ 10.1), and sets `SSH_AUTH_SOCK` for the session.
+2. **Making the socket visible in the container:** with `--containall`, neither the host's `/tmp` nor your
+   home is visible, and binds can't be added to a running instance. So `job.sh` binds both directories at
+   instance start to hidden paths, `/run/slurmtainer/host-tmp` and `/run/slurmtainer/host-agent`, and marks
+   the job with `agent=1` in `connection`.
+3. **Passing `SSH_AUTH_SOCK`:** `--containall` cleans the environment, so `enter.sh` translates the host path
+   to the mounted one and exports it as `APPTAINERENV_SSH_AUTH_SOCK`. Remote-SSH reads `SSH_AUTH_SOCK` in its
+   setup script, which runs in the container, so terminals in VS Code get the translated path
+   (`remote.SSH.enableAgentForwarding`, on by default).
+
+The binds are added only when the setting is on when a job starts; a job started without them keeps running
+without agent forwarding, and the extension says so when connecting. Without the setting, nothing changes
+compared to earlier versions.
 
 ## Files on the cluster
 

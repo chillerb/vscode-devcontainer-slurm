@@ -148,6 +148,22 @@ Containers are **isolated by default**, as you know it from Dev Containers. The 
 - **Mounts you add** under `mounts`.
 - **Git credentials from VS Code:** VS Code forwards Git credential requests from the integrated terminal to your computer, so `git push` inside the container may use your local credentials. Set `"git.terminalAuthentication": false` (and possibly `"git.useIntegratedAskPass": false`) to prevent this.
 
+### SSH agent forwarding (git over SSH)
+
+Your SSH keys are not in the container. To use them, e.g. for `git` over SSH, turn on agent forwarding on your computer:
+
+```jsonc
+"remoteSlurmContainers.forwardSshAgent": true
+```
+
+It takes effect for jobs started afterwards (**Stop Container Job...**, then connect again). Your local `ssh-agent` must hold the keys (`ssh-add -l`). In a container terminal, `ssh-add -l` should then list them.
+
+What it does: the container host entry gets `ForwardAgent yes`, and the job mounts the compute node's `/tmp` and `~/.ssh/agent` (where sshd creates the forwarded agent socket) at `/run/slurmtainer/host-tmp` and `/run/slurmtainer/host-agent`, with `SSH_AUTH_SOCK` pointing there.
+
+- **Security:** while you are connected, root on the compute node can use your agent (not read your keys). Only enable it on clusters you trust, or use a separate key/agent with only the keys you need there.
+- **Isolation:** the node's `/tmp` becomes visible inside the container at `/run/slurmtainer/host-tmp`.
+- Keep Remote-SSH's `remote.SSH.enableAgentForwarding` on (the default).
+
 ### Turning isolation off
 
 Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"persistentWorkdir": false`. The container then behaves like plain Apptainer, which is built to blend into an HPC system rather than to isolate you from it. It swaps the software environment (the image's OS, libraries and tools) but keeps:
@@ -174,6 +190,7 @@ Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"pers
 |---|---|---|
 | `remoteSlurmContainers.sshPath` | `ssh` | Local ssh executable. |
 | `remoteSlurmContainers.openInNewWindow` | `true` | Open containers in a new window. |
+| `remoteSlurmContainers.forwardSshAgent` | `false` | Forward your local SSH agent into the containers (see [SSH agent forwarding](#ssh-agent-forwarding-git-over-ssh)). |
 | `remoteSlurmContainers.templateDirectories` | `[]` | Folders on your computer with your own configuration templates (see [Templates](#templates)). |
 | `remoteSlurmContainers.connectTimeoutMinutes` | `30` | How long to wait for a pending job. The job keeps waiting in the queue after a timeout. |
 

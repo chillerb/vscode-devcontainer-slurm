@@ -1,6 +1,6 @@
 import { CONFIG_DIR, CONFIG_FILE, CONFIG_NAME, configFromPath, DevcontainerConfig, LEGACY_CONFIG_FILE } from './config';
 import { ConnectionInfo, ConnectionStrategy, JobContext } from './connection/types';
-import { PREFIX } from './naming';
+import { AGENT_MOUNTS, PREFIX } from './naming';
 import { shellQuote, writeFileSnippet } from './shell';
 
 /** Lines printed by the generated scripts start with this marker; anything else (e.g. motd) is ignored. */
@@ -317,9 +317,14 @@ export function jobScript(ctx: JobContext, strategy: ConnectionStrategy): string
 		...config.mounts.map(m => `${m.source}:${m.target}${m.readonly ? ':ro' : ''}`),
 	].flatMap(b => ['--bind', shellQuote(b)]);
 	const workdir = config.apptainer.persistentWorkdir ? persistentWorkdir(ctx) : undefined;
+	// Binds can't be added to a running instance, so the directories that will hold forwarded agent sockets
+	// are mounted up front (at hidden paths; enter.sh points SSH_AUTH_SOCK there).
+	const agentBinds = ctx.forwardSshAgent
+		? ['--bind', shellQuote(`/tmp:${AGENT_MOUNTS.tmp}`), '--bind', `"$HOME"/${shellQuote(`.ssh/agent:${AGENT_MOUNTS.home}`)}`]
+		: [];
 	const startArgs = [
 		...config.apptainer.runArgs.map(shellQuote), ...(workdir ? ['--workdir', '"$workdir"'] : []),
-		...binds, shellQuote(config.image), '"$instance"',
+		...binds, ...agentBinds, shellQuote(config.image), '"$instance"',
 	];
 	const modules = config.apptainer.modules.length === 0 ? '' : `if ! command -v module >/dev/null 2>&1; then
 	for f in /etc/profile.d/lmod.sh /etc/profile.d/modules.sh /usr/share/lmod/lmod/init/bash; do
@@ -335,13 +340,13 @@ set -uo pipefail
 sdir=${shellQuote(ctx.sessionDir)}
 apptainer=${shellQuote(config.apptainer.binary)}
 instance="${PREFIX}-$SLURM_JOB_ID"
-${workdir ? `workdir=${workdir}\nmkdir -p "$workdir" && chmod 700 "$workdir"\n` : ''}log() { echo "[${PREFIX}] $*"; }
+${workdir ? `workdir=${workdir}\nmkdir -p "$workdir" && chmod 700 "$workdir"\n` : ''}${ctx.forwardSshAgent ? '(umask 077; mkdir -p "$HOME/.ssh/agent")\n' : ''}log() { echo "[${PREFIX}] $*"; }
 publish_connection() {
 	{
 		echo "job=$SLURM_JOB_ID"
 		echo "node=\${SLURMD_NODENAME:-$(hostname)}"
 		echo "apptainer=$apptainer"
-		printf '%s\\n' "$@"
+${ctx.forwardSshAgent ? '\t\techo "agent=1"\n' : ''}		printf '%s\\n' "$@"
 	} > "$sdir/connection.tmp" && mv "$sdir/connection.tmp" "$sdir/connection"
 }
 cleanup() {

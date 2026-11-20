@@ -21,6 +21,12 @@ export function hostAlias(cluster: string, session: string): string {
 	return `${PREFIX}-${slug(cluster)}-${session}`;
 }
 
+/**
+ * Where the host's agent socket directories are mounted in the container when SSH agent forwarding is on:
+ * sshd creates the forwarded socket in `/tmp/ssh-XXXX/` (OpenSSH < 10.1) or `~/.ssh/agent/` (OpenSSH >= 10.1).
+ */
+export const AGENT_MOUNTS = { tmp: `/run/${PREFIX}/host-tmp`, home: `/run/${PREFIX}/host-agent` };
+
 export function jobName(session: string): string {
 	return `${PREFIX}-${session}`;
 }

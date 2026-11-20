@@ -23,6 +23,7 @@ export class Sessions {
 			sshPath: c.get<string>('sshPath') || 'ssh',
 			openInNewWindow: c.get<boolean>('openInNewWindow', true),
 			connectTimeoutMinutes: c.get<number>('connectTimeoutMinutes', 30),
+			forwardSshAgent: c.get<boolean>('forwardSshAgent', false),
 		};
 	}
 
@@ -254,6 +255,7 @@ export class Sessions {
 			const home = probe.home;
 			const ctx = {
 				session: entry.session, jobName: jobName(entry.session), projectPath: entry.projectPath, config,
+				forwardSshAgent: settings.forwardSshAgent,
 				...clusterPaths(home, entry.session),
 			};
 
@@ -274,6 +276,14 @@ export class Sessions {
 
 			const info = parseConnectionInfo(result.values, sshdStrategy);
 			const options = sshdStrategy.hostOptions(entry.cluster, info, { identityFile: IDENTITY_FILE, knownHostsFile: KNOWN_HOSTS_FILE });
+			if (settings.forwardSshAgent) {
+				options['ForwardAgent'] = 'yes';
+				if (info.values['agent'] !== '1') {
+					this.log.warn(`${entry.alias}: job ${info.jobId} was started without SSH agent forwarding`);
+					vscode.window.showInformationMessage(
+						`SSH agent forwarding takes effect after the job of ${entry.name} is restarted (Stop Container Job, then connect again).`);
+				}
+			}
 			await ssh.writeHost(entry.alias, options);
 			if (options['HostKeyAlias']) {
 				await ssh.pinHostKey(options['HostKeyAlias'], info.hostKey);

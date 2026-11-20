@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { PREFIX, slug } from '../naming';
+import { AGENT_MOUNTS, PREFIX, slug } from '../naming';
 import { shellQuote } from '../shell';
 import { ConnectionInfo, ConnectionStrategy, JobContext, LocalSshFiles, SessionFile } from './types';
 
@@ -96,6 +96,14 @@ if [ -z "$job" ] || [ -z "$apptainer" ]; then
 fi
 ${exports.join('\n')}
 export ${envPrefix}SLURMTAINER_JOB_ID="$job"
+# A forwarded SSH agent socket lives in the host's /tmp or ~/.ssh/agent, which the job mounts at hidden
+# paths when agent forwarding is on.
+if [ -n "\${SSH_AUTH_SOCK:-}" ] && grep -qx 'agent=1' "$sdir/connection" 2>/dev/null; then
+	case "$SSH_AUTH_SOCK" in
+		"$HOME"/.ssh/agent/*) export ${envPrefix}SSH_AUTH_SOCK=${shellQuote(AGENT_MOUNTS.home)}/"\${SSH_AUTH_SOCK#"$HOME"/.ssh/agent/}" ;;
+		/tmp/*) export ${envPrefix}SSH_AUTH_SOCK=${shellQuote(AGENT_MOUNTS.tmp)}/"\${SSH_AUTH_SOCK#/tmp/}" ;;
+	esac
+fi
 exec "$apptainer" exec --pwd ${shellQuote(config.workspaceFolder)} "instance://${PREFIX}-$job" /bin/sh -c '
 if command -v bash >/dev/null 2>&1; then sh=bash; else sh=sh; fi
 if [ -n "$1" ]; then exec "$sh" -c "$1"; else exec "$sh" -l; fi' sh "\${SSH_ORIGINAL_COMMAND:-}"

@@ -11,6 +11,11 @@ export interface JobContext {
 	sessionDir: string;
 	/** Absolute state directory on the cluster (`~/.slurmtainer`). */
 	baseDir: string;
+	/**
+	 * Make forwarded SSH agents usable in the container (`remoteSlurmContainers.forwardSshAgent`): mount the
+	 * host's socket directories (`AGENT_MOUNTS` in `naming.ts`) and let the connection strategy point `SSH_AUTH_SOCK` there.
+	 */
+	forwardSshAgent?: boolean;
 }
 
 /** Reported by the cluster once the container is ready. */
