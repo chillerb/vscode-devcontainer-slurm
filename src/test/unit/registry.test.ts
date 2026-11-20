@@ -7,7 +7,11 @@ class MemoryStore implements StateStore {
 		return (this.data.get(key) as T) ?? defaultValue;
 	}
 	async update(key: string, value: unknown): Promise<void> {
-		this.data.set(key, JSON.parse(JSON.stringify(value)));
+		if (value === undefined) {
+			this.data.delete(key);
+		} else {
+			this.data.set(key, JSON.parse(JSON.stringify(value)));
+		}
 	}
 }
 
@@ -17,7 +21,7 @@ suite('registry', () => {
 		const a = await registry.register('marburg', '/home/j/My Project/', 1);
 		assert.deepStrictEqual(a, {
 			cluster: 'marburg', projectPath: '/home/j/My Project', session: 'my-project',
-			alias: 'slurm-devcontainer-marburg-my-project', name: 'My Project', lastUsed: 1,
+			alias: 'slurmtainer-marburg-my-project', name: 'My Project', lastUsed: 1,
 		});
 		const again = await registry.register('marburg', '/home/j/My Project', 2);
 		assert.strictEqual(again.session, 'my-project');
@@ -25,8 +29,19 @@ suite('registry', () => {
 		const clash = await registry.register('marburg', '/scratch/my-project', 3);
 		assert.strictEqual(clash.session, 'my-project-2');
 		const otherCluster = await registry.register('juwels', '/scratch/my-project', 4);
-		assert.strictEqual(otherCluster.alias, 'slurm-devcontainer-juwels-my-project');
+		assert.strictEqual(otherCluster.alias, 'slurmtainer-juwels-my-project');
 		assert.deepStrictEqual(registry.list().map(e => e.lastUsed), [4, 3, 2]);
+	});
+
+	test('drops the entries of versions before the rename', async () => {
+		const store = new MemoryStore();
+		await store.update('remoteSlurmContainers.entries', [{ alias: 'slurm-devcontainer-c-p' }]);
+		const registry = new Registry(store);
+		await registry.register('c', '/p', 1);
+		assert.strictEqual(await registry.dropLegacyEntries(), true);
+		assert.strictEqual(store.get('remoteSlurmContainers.entries', undefined), undefined);
+		assert.strictEqual(await registry.dropLegacyEntries(), false);
+		assert.deepStrictEqual(registry.list().map(e => e.alias), ['slurmtainer-c-p']);
 	});
 
 	test('updates, finds and removes entries', async () => {

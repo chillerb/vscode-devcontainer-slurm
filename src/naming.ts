@@ -1,6 +1,6 @@
 import * as path from 'path';
 
-export const PREFIX = 'slurm-devcontainer';
+export const PREFIX = 'slurmtainer';
 
 /** Lower-case name that is safe in SSH host aliases, Slurm job names and file names. */
 export function slug(value: string): string {
@@ -12,7 +12,7 @@ export function defaultSessionName(projectPath: string): string {
 	return slug(path.posix.basename(projectPath));
 }
 
-/** SSH host alias of the container, e.g. `slurm-devcontainer-marburg-my-project`. */
+/** SSH host alias of the container, e.g. `slurmtainer-marburg-my-project`. */
 export function hostAlias(cluster: string, session: string): string {
 	return `${PREFIX}-${slug(cluster)}-${session}`;
 }

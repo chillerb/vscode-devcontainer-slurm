@@ -5,7 +5,7 @@ export function shellQuote(value: string): string {
 
 /** A bash snippet writing `content` verbatim to `target` (a shell expression). */
 export function writeFileSnippet(target: string, content: string, mode?: string): string {
-	let delimiter = 'SLURM_DEVCONTAINER_EOF';
+	let delimiter = 'SLURMTAINER_EOF';
 	while (content.split('\n').includes(delimiter)) {
 		delimiter += '_';
 	}

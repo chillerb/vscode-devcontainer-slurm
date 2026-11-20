@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { sshAuthority, sshDestination, sshHostFromAuthority } from './authority';
 import { clusterPaths, launchScript, logScript, parseConnectionInfo, probeScript, stopScript } from './clusterScript';
-import { ConfigError, DevcontainerConfig, parseConfig } from './config';
+import { CONFIG_FILE, ConfigError, DevcontainerConfig, parseConfig } from './config';
 import { sshdStrategy } from './connection/sshd';
 import { jobName, PREFIX } from './naming';
 import { Entry, Registry } from './registry';
@@ -258,8 +258,13 @@ export class Sessions {
 	private parseProbedConfig(entry: Entry, probe: RunResult): DevcontainerConfig {
 		const get = (key: string) => lastValue(probe, key);
 		const missing = get('config-missing');
+		const legacy = get('legacy-config');
+		if (legacy !== undefined) {
+			throw new ConfigError(`Found an old configuration at ${legacy}. Since version 0.4.0 it is called ${CONFIG_FILE}: `
+				+ 'rename the folder .slurm-devcontainer to .slurmtainer and the file slurm-devcontainer.json to slurmtainer.json.');
+		}
 		if (missing !== undefined) {
-			throw new ConfigError(`No configuration found at ${missing}. Open the project on ${entry.cluster} and run "Slurm Dev Containers: Add Configuration File...".`);
+			throw new ConfigError(`No configuration found at ${missing}. Open the project on ${entry.cluster} and run "Slurmtainer: Add Configuration File...".`);
 		}
 		const env: Record<string, string> = {};
 		for (const pair of Buffer.from(get('env') ?? '', 'base64').toString('utf8').split('\0')) {
@@ -283,7 +288,7 @@ export class Sessions {
 		const copy = 'Copy Line';
 		const choice = await vscode.window.showInformationMessage('One-time SSH setup', {
 			modal: true,
-			detail: `Slurm Dev Containers keeps the SSH host entries of your containers in ${INCLUDE_TARGET} and never edits other SSH files on its own. `
+			detail: `Slurmtainer keeps the SSH host entries of your containers in ${INCLUDE_TARGET} and never edits other SSH files on its own. `
 				+ `For Remote-SSH to find these entries, ${path.join('~', '.ssh', 'config')} on this computer needs this line at the top:\n\n${line}\n\n`
 				+ 'Add it for you now, or copy it and add it yourself?',
 		}, add, copy);

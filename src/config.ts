@@ -2,8 +2,10 @@ import * as jsonc from 'jsonc-parser';
 import * as path from 'path';
 
 /** Location of the configuration file, relative to the project folder. */
-export const CONFIG_DIR = '.slurm-devcontainer';
-export const CONFIG_FILE = `${CONFIG_DIR}/slurm-devcontainer.json`;
+export const CONFIG_DIR = '.slurmtainer';
+export const CONFIG_FILE = `${CONFIG_DIR}/slurmtainer.json`;
+/** Location used up to 0.3.x, before the rename to slurmtainer. Only detected to tell the user to rename it. */
+export const LEGACY_CONFIG_FILE = '.slurm-devcontainer/slurm-devcontainer.json';
 
 export interface SlurmOptions {
 	partition?: string;
@@ -321,7 +323,7 @@ function mapValues(obj: Record<string, string>, fn: (s: string) => string): Reco
 
 /** Commented starter configuration written by the "Add Configuration File" command. */
 export function configTemplate(name: string): string {
-	return `// Configuration for the Slurm Dev Containers extension.
+	return `// Configuration for the Slurmtainer extension (Slurm Dev Containers).
 // Format: a subset of devcontainer.json (https://containers.dev) plus "slurm", "apptainer" and "connection".
 {
 	"name": ${JSON.stringify(name)},
@@ -371,7 +373,7 @@ export function configTemplate(name: string): string {
 		// workdir, the VS Code server and extensions are downloaded only once. It has no effect without
 		// "--contain"/"--containall". Set it to false if you pass your own --workdir in "runArgs".
 		"persistentWorkdir": true
-		// Optional location; default: ~/.slurm-devcontainer/work/<project> on the cluster.
+		// Optional location; default: ~/.slurmtainer/work/<project> on the cluster.
 		// "persistentWorkdirPath": "~/containers/\${localWorkspaceFolderBasename}"
 	}
 }

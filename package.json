@@ -1,6 +1,6 @@
 {
   "name": "remote-slurm-containers",
-  "displayName": "Slurm Dev Containers",
+  "displayName": "Slurmtainer: Slurm Dev Containers",
   "description": "Develop inside Apptainer containers running as Slurm jobs on HPC clusters, similar to Dev Containers.",
   "version": "0.3.1",
   "publisher": "chillerb",
@@ -44,18 +44,18 @@
       {
         "id": "jsonc",
         "filenamePatterns": [
-          "**/.slurm-devcontainer/slurm-devcontainer.json"
+          "**/.slurmtainer/slurmtainer.json"
         ]
       }
     ],
     "jsonValidation": [
       {
-        "fileMatch": "**/.slurm-devcontainer/slurm-devcontainer.json",
-        "url": "./schemas/slurm-devcontainer.schema.json"
+        "fileMatch": "**/.slurmtainer/slurmtainer.json",
+        "url": "./schemas/slurmtainer.schema.json"
       }
     ],
     "configuration": {
-      "title": "Slurm Dev Containers",
+      "title": "Slurmtainer",
       "properties": {
         "remoteSlurmContainers.sshPath": {
           "type": "string",
@@ -79,37 +79,37 @@
       {
         "command": "remoteSlurmContainers.open",
         "title": "Open Folder in Container",
-        "category": "Slurm Dev Containers"
+        "category": "Slurmtainer"
       },
       {
         "command": "remoteSlurmContainers.connect",
         "title": "Connect to Container...",
-        "category": "Slurm Dev Containers"
+        "category": "Slurmtainer"
       },
       {
         "command": "remoteSlurmContainers.add",
         "title": "Add Container...",
-        "category": "Slurm Dev Containers"
+        "category": "Slurmtainer"
       },
       {
         "command": "remoteSlurmContainers.stop",
         "title": "Stop Container Job...",
-        "category": "Slurm Dev Containers"
+        "category": "Slurmtainer"
       },
       {
         "command": "remoteSlurmContainers.remove",
         "title": "Remove Container from List...",
-        "category": "Slurm Dev Containers"
+        "category": "Slurmtainer"
       },
       {
         "command": "remoteSlurmContainers.showLog",
         "title": "Show Job Log...",
-        "category": "Slurm Dev Containers"
+        "category": "Slurmtainer"
       },
       {
         "command": "remoteSlurmContainers.addConfig",
         "title": "Add Configuration File...",
-        "category": "Slurm Dev Containers"
+        "category": "Slurmtainer"
       }
     ],
     "menus": {

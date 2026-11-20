@@ -1,6 +1,6 @@
 # How it works
 
-This document explains how Slurm Dev Containers gets VS Code into an Apptainer container running as a Slurm
+This document explains how Slurmtainer gets VS Code into an Apptainer container running as a Slurm
 job. It starts with the big picture and then goes through each step in detail.
 
 ## Overview
@@ -76,7 +76,7 @@ All scripts are generated in `src/clusterScript.ts`:
 
 ### 2. Probing and parsing the config
 
-First, the extension creates its own key pair `~/.ssh/slurm-devcontainer/id_ed25519(.pub)` on your
+First, the extension creates its own key pair `~/.ssh/slurmtainer/id_ed25519(.pub)` on your
 computer if it doesn't exist yet. This key is used only for the containers.
 
 Then `probeScript` runs on the login node and reports:
@@ -86,7 +86,7 @@ Then `probeScript` runs on the login node and reports:
 | `home` | `$HOME`, used to build absolute cluster paths |
 | `user` | `id -un` |
 | `env` | `env -0 \| base64`: the full login-node environment, NUL-separated and base64-encoded so newlines and special characters survive |
-| `config` | `.slurm-devcontainer/slurm-devcontainer.json`, base64-encoded; or `config-missing=<path>` |
+| `config` | `.slurmtainer/slurmtainer.json`, base64-encoded; or `config-missing=<path>` |
 | `error` | only if `sbatch` is not on the `PATH` |
 
 `parseConfig` (`src/config.ts`) then:
@@ -101,28 +101,28 @@ Then `probeScript` runs on the login node and reports:
   - `apptainer.binary`: `apptainer`
   - `connection.sshdPath`: `/usr/sbin/sshd`
 - turns `image` into a full reference: a bare name like `ubuntu:24.04` becomes `docker://ubuntu:24.04`, and
-  a relative path or `*.sif` is resolved against `.slurm-devcontainer/`;
+  a relative path or `*.sif` is resolved against `.slurmtainer/`;
 - rejects invalid settings, such as a relative `workspaceFolder` or `--workdir` in `runArgs` while
   `persistentWorkdir` is on.
 
 The session name is the slugified project folder name, with `-2`, `-3`… added if the name is already taken
 on that cluster. It determines:
 
-- the Slurm job name: `slurm-devcontainer-<session>`;
-- the session directory: `~/.slurm-devcontainer/sessions/<session>`;
-- the default workdir: `~/.slurm-devcontainer/work/<session>`;
-- the local host alias: `slurm-devcontainer-<cluster>-<session>`.
+- the Slurm job name: `slurmtainer-<session>`;
+- the session directory: `~/.slurmtainer/sessions/<session>`;
+- the default workdir: `~/.slurmtainer/work/<session>`;
+- the local host alias: `slurmtainer-<cluster>-<session>`.
 
 ### 3. Launching and waiting (`launchScript`)
 
 Everything below runs in a single SSH call with `set -euo pipefail` and `umask 077`.
 
-1. **Shared SSH files** (one set per cluster, in `~/.slurm-devcontainer/ssh/`):
+1. **Shared SSH files** (one set per cluster, in `~/.slurmtainer/ssh/`):
    - creates `host_ed25519` once. This is the host key of every job's sshd on this cluster, which is why the
      extension can pin it locally;
    - adds your local public key to `authorized_keys` unless the exact line is already there.
 2. **Look for an existing job:**
-   `squeue -u $USER -n slurm-devcontainer-<session> -t PENDING,CONFIGURING,RUNNING,SUSPENDED`. Only pending
+   `squeue -u $USER -n slurmtainer-<session> -t PENDING,CONFIGURING,RUNNING,SUSPENDED`. Only pending
    or running jobs count; a cancelled job stays visible as COMPLETING for a few seconds and must not be
    reused.
 3. **Ownership check:** `$sdir/project` records which project path owns the session. If a job is active and
@@ -149,29 +149,29 @@ that the port is numeric.
 
 ### 4. Writing the local SSH entry
 
-The extension writes a host block into its own file, `~/.ssh/slurm-devcontainer/config`:
+The extension writes a host block into its own file, `~/.ssh/slurmtainer/config`:
 
 ```
-Host slurm-devcontainer-<cluster>-<session>
+Host slurmtainer-<cluster>-<session>
   HostName <node>
   Port <port>
   User <user>
   ProxyJump <cluster>
-  IdentityFile ~/.ssh/slurm-devcontainer/id_ed25519
+  IdentityFile ~/.ssh/slurmtainer/id_ed25519
   IdentitiesOnly yes
-  HostKeyAlias slurm-devcontainer-<cluster>
-  UserKnownHostsFile ~/.ssh/slurm-devcontainer/known_hosts
+  HostKeyAlias slurmtainer-<cluster>
+  UserKnownHostsFile ~/.ssh/slurmtainer/known_hosts
   StrictHostKeyChecking yes
 ```
 
-It pins the sshd host key under `HostKeyAlias` in `~/.ssh/slurm-devcontainer/known_hosts`. Your own
-`~/.ssh/config` only needs one line, `Include ~/.ssh/slurm-devcontainer/config`, which the extension adds
+It pins the sshd host key under `HostKeyAlias` in `~/.ssh/slurmtainer/known_hosts`. Your own
+`~/.ssh/config` only needs one line, `Include ~/.ssh/slurmtainer/config`, which the extension adds
 only after you agree in a dialog.
 
 ### 5. Opening the folder
 
 The extension calls
-`vscode.openFolder(vscode-remote://ssh-remote+slurm-devcontainer-<cluster>-<session>/workspaces/<project>)`.
+`vscode.openFolder(vscode-remote://ssh-remote+slurmtainer-<cluster>-<session>/workspaces/<project>)`.
 Remote-SSH takes over from here; see [How VS Code reaches the container](#how-vs-code-reaches-the-container).
 
 ## Files generated for the job
@@ -180,7 +180,7 @@ Remote-SSH takes over from here; see [How VS Code reaches the container](#how-vs
 
 The script starts with the `#SBATCH` directives:
 
-- always: `--job-name=slurm-devcontainer-<session>`, `--output=<session dir>/job.log`, `--nodes=1`,
+- always: `--job-name=slurmtainer-<session>`, `--output=<session dir>/job.log`, `--nodes=1`,
   `--ntasks=1`;
 - if set in the config: `--partition`, `--time`, `--cpus-per-task`, `--mem`, `--gpus`, `--account`,
   `--qos`, `--constraint`;
@@ -188,7 +188,7 @@ The script starts with the `#SBATCH` directives:
 
 It then:
 
-1. **Sets variables:** `sdir`, `apptainer` (the binary) and `instance="slurm-devcontainer-$SLURM_JOB_ID"`.
+1. **Sets variables:** `sdir`, `apptainer` (the binary) and `instance="slurmtainer-$SLURM_JOB_ID"`.
 2. **Prepares the workdir** if `persistentWorkdir` is on: `mkdir -p` and `chmod 700` on the workdir.
 3. **Defines `publish_connection key=value…`:** it writes `job=`, `node=` (`$SLURMD_NODENAME`),
    `apptainer=` (the resolved binary path) and the given pairs to `connection.tmp`, then renames it to
@@ -215,8 +215,8 @@ It then:
 ### `sshd_config`: the unprivileged sshd
 
 ```
-HostKey ~/.slurm-devcontainer/ssh/host_ed25519
-AuthorizedKeysFile ~/.slurm-devcontainer/ssh/authorized_keys
+HostKey ~/.slurmtainer/ssh/host_ed25519
+AuthorizedKeysFile ~/.slurmtainer/ssh/authorized_keys
 PidFile none
 UsePAM no
 StrictModes no
@@ -226,7 +226,7 @@ AllowTcpForwarding yes
 X11Forwarding no
 PermitTTY yes
 PrintMotd no
-ForceCommand ~/.slurm-devcontainer/sessions/<session>/enter.sh
+ForceCommand ~/.slurmtainer/sessions/<session>/enter.sh
 ```
 
 (The generated file uses absolute paths.)
@@ -244,8 +244,8 @@ job=$(sed -n 's/^job=//p' "$sdir/connection")
 apptainer=$(sed -n 's/^apptainer=//p' "$sdir/connection")
 # exits with "the container is not running" if either is empty
 export APPTAINERENV_<K>='<v>' …          # containerEnv + remoteEnv (SINGULARITYENV_ for singularity)
-export APPTAINERENV_SLURM_DEVCONTAINER_JOB_ID="$job"
-exec "$apptainer" exec --pwd <workspaceFolder> "instance://slurm-devcontainer-$job" /bin/sh -c '
+export APPTAINERENV_SLURMTAINER_JOB_ID="$job"
+exec "$apptainer" exec --pwd <workspaceFolder> "instance://slurmtainer-$job" /bin/sh -c '
   if command -v bash >/dev/null 2>&1; then sh=bash; else sh=sh; fi
   if [ -n "$1" ]; then exec "$sh" -c "$1"; else exec "$sh" -l; fi' sh "${SSH_ORIGINAL_COMMAND:-}"
 ```
@@ -302,7 +302,7 @@ setup script is sent. The principle stays the same.
   through SSH or `enter.sh`.
 - **A second window, or reconnecting after sleep, while the job runs:** Remote-SSH connects again, finds the
   server still running and only rebuilds the tunnel.
-- **A plain `ssh slurm-devcontainer-<cluster>-<session>`** from your terminal goes through `enter.sh` and
+- **A plain `ssh slurmtainer-<cluster>-<session>`** from your terminal goes through `enter.sh` and
   gives you a login shell inside the container.
 - **When the job ends** (time limit or Stop), the instance and sshd are gone, so the window loses its
   connection. Connecting again submits a new job and reuses the server from the workdir.
@@ -310,7 +310,7 @@ setup script is sent. The principle stays the same.
 ## Files on the cluster
 
 ```
-~/.slurm-devcontainer/
+~/.slurmtainer/
 ├── ssh/host_ed25519{,.pub}, authorized_keys     # shared by all sessions on this cluster
 ├── sessions/<session>/
 │   ├── project        # owning project path (collision check)

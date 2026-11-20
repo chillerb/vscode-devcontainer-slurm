@@ -7,9 +7,9 @@ export interface JobContext {
 	/** Absolute project path on the cluster. */
 	projectPath: string;
 	config: DevcontainerConfig;
-	/** Absolute session directory on the cluster (`~/.slurm-devcontainer/sessions/<session>`). */
+	/** Absolute session directory on the cluster (`~/.slurmtainer/sessions/<session>`). */
 	sessionDir: string;
-	/** Absolute state directory on the cluster (`~/.slurm-devcontainer`). */
+	/** Absolute state directory on the cluster (`~/.slurmtainer`). */
 	baseDir: string;
 }
 

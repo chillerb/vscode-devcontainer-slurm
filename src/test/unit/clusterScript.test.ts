@@ -6,7 +6,7 @@ import * as path from 'path';
 import {
 	clusterPaths, jobScript, launchScript, logScript, parseConnectionInfo, parseMarkedLine, probeScript, sbatchDirectives, stopScript,
 } from '../../clusterScript';
-import { CONFIG_FILE, parseConfig } from '../../config';
+import { CONFIG_FILE, LEGACY_CONFIG_FILE, parseConfig } from '../../config';
 import { sshdStrategy } from '../../connection/sshd';
 import { JobContext } from '../../connection/types';
 
@@ -45,7 +45,7 @@ suite('clusterScript', function () {
 		home = path.join(tmp, 'home');
 		bin = path.join(tmp, 'bin');
 		project = path.join(home, 'my project');
-		fs.mkdirSync(path.join(project, '.slurm-devcontainer'), { recursive: true });
+		fs.mkdirSync(path.join(project, '.slurmtainer'), { recursive: true });
 		fs.mkdirSync(bin);
 		writeExecutable(path.join(bin, 'apptainer'), `#!/bin/bash
 printf '%s\\n' "$@" >> "$HOME/apptainer.log"
@@ -62,7 +62,7 @@ printf 'ARG:%s\\n' "$@"
 			connection: { sshdPath: path.join(bin, 'fake-sshd') },
 		}), { localWorkspaceFolder: project, localEnv: {} });
 		ctx = {
-			session: 'my-project', jobName: 'slurm-devcontainer-my-project', projectPath: project, config,
+			session: 'my-project', jobName: 'slurmtainer-my-project', projectPath: project, config,
 			...clusterPaths(home, 'my-project'),
 		};
 	});
@@ -112,7 +112,7 @@ printf 'ARG:%s\\n' "$@"
 		const result = bash(logScript(ctx.session), { HOME: home });
 		assert.deepStrictEqual(marked(result.stdout), [['log', 'line 1'], ['log', 'line 2']]);
 		const missing = bash(logScript('other'), { HOME: home });
-		assert.match(new Map(marked(missing.stdout)).get('error')!, /No job log found at .*\/\.slurm-devcontainer\/sessions\/other\/job\.log/);
+		assert.match(new Map(marked(missing.stdout)).get('error')!, /No job log found at .*\/\.slurmtainer\/sessions\/other\/job\.log/);
 	});
 
 	test('validates the reported connection values', () => {
@@ -140,6 +140,15 @@ printf 'ARG:%s\\n' "$@"
 		const env = Buffer.from(values.get('env')!, 'base64').toString().split('\0');
 		assert.ok(env.includes('MARKER_TEST=a\nb'));
 		assert.strictEqual(values.get('error'), 'sbatch not found on the login node');
+		assert.strictEqual(values.get('legacy-config'), undefined);
+	});
+
+	test('probe reports a configuration in the location used before 0.4.0', () => {
+		fs.mkdirSync(path.join(project, '.slurm-devcontainer'));
+		fs.writeFileSync(path.join(project, LEGACY_CONFIG_FILE), '{ "image": "x" }');
+		const values = new Map(marked(bash(probeScript(project), { HOME: home }).stdout));
+		assert.strictEqual(values.get('config-missing'), path.join(project, CONFIG_FILE));
+		assert.strictEqual(values.get('legacy-config'), path.join(project, LEGACY_CONFIG_FILE));
 	});
 
 	test('launch submits a job and waits for the connection', () => {
@@ -304,21 +313,21 @@ echo RUNNING
 			const started = fs.readFileSync(path.join(home, 'apptainer.log'), 'utf8').split('\n');
 			assert.deepStrictEqual(started.slice(0, 10), [
 				'instance', 'start', '--nv', '--bind', `${project}:/workspaces/my project`, '--bind', '/scratch:/scratch:ro',
-				'docker://ubuntu:24.04', 'slurm-devcontainer-7', '',
+				'docker://ubuntu:24.04', 'slurmtainer-7', '',
 			]);
 
 			const enter = spawnSync(path.join(ctx.sessionDir, 'enter.sh'), { env: { ...process.env, HOME: home, SSH_ORIGINAL_COMMAND: 'echo hi' }, encoding: 'utf8' });
 			assert.strictEqual(enter.status, 0, enter.stderr);
 			assert.ok(enter.stdout.includes("FOO=it's here"), enter.stdout);
 			const args = enter.stdout.split('\n').filter(l => l.startsWith('ARG:')).map(l => l.slice(4));
-			assert.deepStrictEqual(args.slice(0, 5), ['exec', '--pwd', '/workspaces/my project', 'instance://slurm-devcontainer-7', '/bin/sh']);
+			assert.deepStrictEqual(args.slice(0, 5), ['exec', '--pwd', '/workspaces/my project', 'instance://slurmtainer-7', '/bin/sh']);
 			assert.strictEqual(args[args.length - 1], 'echo hi');
 
 			const exited = new Promise(resolve => job!.on('exit', resolve));
 			job.kill('SIGTERM');
 			await exited;
 			assert.ok(!fs.existsSync(connection), 'connection file removed on exit');
-			assert.match(fs.readFileSync(path.join(home, 'apptainer.log'), 'utf8'), /instance\nstop\nslurm-devcontainer-7/);
+			assert.match(fs.readFileSync(path.join(home, 'apptainer.log'), 'utf8'), /instance\nstop\nslurmtainer-7/);
 		} finally {
 			job?.kill('SIGKILL');
 		}

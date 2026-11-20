@@ -104,7 +104,7 @@ suite('config', () => {
 		assert.strictEqual(resolveImage('ubuntu', ws), 'docker://ubuntu');
 		assert.strictEqual(resolveImage('oras://ghcr.io/x/y:1', ws), 'oras://ghcr.io/x/y:1');
 		assert.strictEqual(resolveImage('/images/a.sif', ws), '/images/a.sif');
-		assert.strictEqual(resolveImage('./a.sif', ws), '/home/jdoe/p/.slurm-devcontainer/a.sif');
+		assert.strictEqual(resolveImage('./a.sif', ws), '/home/jdoe/p/.slurmtainer/a.sif');
 		assert.strictEqual(resolveImage('../images/a.sif', ws), '/home/jdoe/p/images/a.sif');
 	});
 

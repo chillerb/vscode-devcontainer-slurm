@@ -22,24 +22,24 @@ suite('sshConfig', () => {
 	test('detects and adds the Include line', () => {
 		const home = '/home/jdoe';
 		assert.ok(!hasInclude('Host x\n  HostName y\n', home));
-		assert.ok(hasInclude('Include ~/.ssh/slurm-devcontainer/config\n', home));
-		assert.ok(hasInclude('  include "/home/jdoe/.ssh/slurm-devcontainer/config"\n', home));
-		assert.ok(hasInclude('Include other slurm-devcontainer/config\n', home));
+		assert.ok(hasInclude('Include ~/.ssh/slurmtainer/config\n', home));
+		assert.ok(hasInclude('  include "/home/jdoe/.ssh/slurmtainer/config"\n', home));
+		assert.ok(hasInclude('Include other slurmtainer/config\n', home));
 		const updated = addInclude('Host x\n');
 		assert.ok(hasInclude(updated, home));
 		assert.ok(updated.indexOf('Include') < updated.indexOf('Host x'));
 	});
 
 	test('lists concrete hosts of the user config', () => {
-		const text = 'Host *\n  User x\nHost cluster cluster-b\nhost !bad slurm-devcontainer-cluster-p other?\nMatch host foo\n';
+		const text = 'Host *\n  User x\nHost cluster cluster-b\nhost !bad slurmtainer-cluster-p other?\nMatch host foo\n';
 		assert.deepStrictEqual(listHosts(text), ['cluster', 'cluster-b']);
 	});
 
 	test('pins host keys per alias', () => {
-		let text = upsertKnownHost('', 'slurm-devcontainer-a', 'ssh-ed25519 AAAA1 comment');
+		let text = upsertKnownHost('', 'slurmtainer-a', 'ssh-ed25519 AAAA1 comment');
 		text = upsertKnownHost(text, 'other', 'ssh-ed25519 BBBB');
-		text = upsertKnownHost(text, 'slurm-devcontainer-a', 'ssh-ed25519 AAAA2');
-		assert.strictEqual(text, 'other ssh-ed25519 BBBB\nslurm-devcontainer-a ssh-ed25519 AAAA2\n');
+		text = upsertKnownHost(text, 'slurmtainer-a', 'ssh-ed25519 AAAA2');
+		assert.strictEqual(text, 'other ssh-ed25519 BBBB\nslurmtainer-a ssh-ed25519 AAAA2\n');
 	});
 
 	test('LocalSsh manages only its own files unless asked', async () => {
@@ -49,8 +49,8 @@ suite('sshConfig', () => {
 			const pub = await ssh.ensureKey();
 			assert.match(pub, /^ssh-ed25519 /);
 			assert.strictEqual(await ssh.ensureKey(), pub);
-			await ssh.writeHost('h', { HostName: 'n', Port: '2222', ProxyJump: 'cluster', IdentityFile: '~/.ssh/slurm-devcontainer/id_ed25519', IdentitiesOnly: 'yes' });
-			const resolved = spawnSync('ssh', ['-G', '-F', path.join(home, '.ssh', 'slurm-devcontainer', 'config'), 'h'], { encoding: 'utf8' });
+			await ssh.writeHost('h', { HostName: 'n', Port: '2222', ProxyJump: 'cluster', IdentityFile: '~/.ssh/slurmtainer/id_ed25519', IdentitiesOnly: 'yes' });
+			const resolved = spawnSync('ssh', ['-G', '-F', path.join(home, '.ssh', 'slurmtainer', 'config'), 'h'], { encoding: 'utf8' });
 			assert.strictEqual(resolved.status, 0, resolved.stderr);
 			assert.match(resolved.stdout, /^port 2222$/m);
 			assert.match(resolved.stdout, /^proxyjump cluster$/m);
@@ -66,7 +66,7 @@ suite('sshConfig', () => {
 			assert.ok(userConfig.endsWith('Host cluster\n  HostName login\n'));
 			assert.deepStrictEqual(await ssh.listUserHosts(), ['cluster']);
 			await ssh.removeHost('h');
-			assert.deepStrictEqual([...parseHostBlocks(fs.readFileSync(path.join(home, '.ssh', 'slurm-devcontainer', 'config'), 'utf8'))], []);
+			assert.deepStrictEqual([...parseHostBlocks(fs.readFileSync(path.join(home, '.ssh', 'slurmtainer', 'config'), 'utf8'))], []);
 		} finally {
 			fs.rmSync(home, { recursive: true, force: true });
 		}

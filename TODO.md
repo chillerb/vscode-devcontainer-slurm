@@ -3,7 +3,7 @@
 Design and decisions: see "How it works" in `README.md`. Short version:
 a UI extension (runs locally) submits a Slurm job on the login node via `ssh <alias>`. The job starts an
 Apptainer instance and a user-level sshd, and VS Code connects via Remote-SSH (`ProxyJump <alias>`) using
-extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config` is only changed (a single
+extension-owned files in `~/.ssh/slurmtainer/`. The user's `~/.ssh/config` is only changed (a single
 `Include` line) after explicit consent.
 
 ## In progress
@@ -30,6 +30,7 @@ extension-owned files in `~/.ssh/slurm-devcontainer/`. The user's `~/.ssh/config
 - [x] Isolated by default: `--containall` plus a managed persistent `--workdir` (`apptainer.persistentWorkdir`, `persistentWorkdirPath`; replaces 0.2.0's `persistentHome`), conflict check with `--workdir` in `runArgs`; README sections on isolation and Apptainer vs. Docker
 - [x] Packaging: publisher `chillerb`, MIT license, repository links, preview flag, `.vscodeignore`; CI and release workflow (VS Code Marketplace); `VSCE_PAT` secret added
 - [x] Manual end-to-end test on real Slurm clusters: the published extension starts and connects to containers on two clusters
+- [x] Rename the `slurm-devcontainer` stem to `slurmtainer` (config, folders, aliases, job/instance names, env vars; display name "Slurmtainer: Slurm Dev Containers"), clean break with a hint for old config locations and README upgrade steps
 
 ## Future
 

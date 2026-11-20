@@ -5,9 +5,10 @@ import { Registry } from './registry';
 import { reportErrors, Sessions } from './session';
 
 export function activate(context: vscode.ExtensionContext) {
-	const log = vscode.window.createOutputChannel('Slurm Dev Containers', { log: true });
+	const log = vscode.window.createOutputChannel('Slurmtainer', { log: true });
 	const registry = new Registry(context.globalState);
 	const sessions = new Sessions(registry, log);
+	void registry.dropLegacyEntries().then(dropped => dropped && log.info('dropped the container list of a version before 0.4.0 (renamed to slurmtainer)'));
 	const command = (id: string, fn: () => Promise<unknown>) =>
 		vscode.commands.registerCommand(`remoteSlurmContainers.${id}`, () => reportErrors(log, fn));
 

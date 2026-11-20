@@ -4,6 +4,16 @@ All notable changes to the "remote-slurm-containers" extension will be documente
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** renamed from `slurm-devcontainer` to `slurmtainer`. The display name is now "Slurmtainer: Slurm Dev Containers" and the commands are listed under "Slurmtainer". The extension ID and the `remoteSlurmContainers.*` settings are unchanged. There is no automatic migration; see "Upgrading from 0.3.x" in the README:
+  - the configuration is now `.slurmtainer/slurmtainer.json`. The extension reports a file at the old location `.slurm-devcontainer/slurm-devcontainer.json`;
+  - files on the cluster are now in `~/.slurmtainer`, local SSH files in `~/.ssh/slurmtainer`, which needs a new `Include ~/.ssh/slurmtainer/config` line;
+  - host aliases, job and instance names start with `slurmtainer-`; the environment variable in the container is `SLURMTAINER_JOB_ID`;
+  - the list of known containers starts empty.
+
 ## [v0.3.1] - 2026-10-26
 
 ### Fixed

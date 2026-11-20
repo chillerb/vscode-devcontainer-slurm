@@ -28,7 +28,9 @@ export interface StateStore {
 	update(key: string, value: unknown): Thenable<void>;
 }
 
-const KEY = 'remoteSlurmContainers.entries';
+const KEY = 'remoteSlurmContainers.containers';
+/** Key used up to 0.3.x; its entries refer to the old `slurm-devcontainer-*` host aliases. */
+const LEGACY_KEY = 'remoteSlurmContainers.entries';
 
 /** Extensions from the config that have not been installed into the container yet. */
 export function extensionsToInstall(entry: Entry): string[] {
@@ -38,6 +40,15 @@ export function extensionsToInstall(entry: Entry): string[] {
 
 export class Registry {
 	constructor(private readonly store: StateStore) { }
+
+	/** Drops the entries of versions before the rename to slurmtainer (clean break, see CHANGELOG 0.4.0). */
+	async dropLegacyEntries(): Promise<boolean> {
+		if (this.store.get<Entry[] | undefined>(LEGACY_KEY, undefined) === undefined) {
+			return false;
+		}
+		await this.store.update(LEGACY_KEY, undefined);
+		return true;
+	}
 
 	/** Most recently used first. */
 	list(): Entry[] {

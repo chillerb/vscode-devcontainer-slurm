@@ -1,6 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "Slurm Dev Container configuration",
+	"title": "Slurmtainer configuration",
 	"description": "Subset of devcontainer.json (https://containers.dev) plus Slurm and Apptainer settings.",
 	"type": "object",
 	"required": ["image"],
@@ -11,7 +11,7 @@
 		},
 		"image": {
 			"type": "string",
-			"description": "Apptainer image: \"docker://…\", \"oras://…\", \"library://…\" or a path to a .sif file (relative paths are resolved against the .slurm-devcontainer folder). Bare names such as \"ubuntu:24.04\" are treated as Docker images."
+			"description": "Apptainer image: \"docker://…\", \"oras://…\", \"library://…\" or a path to a .sif file (relative paths are resolved against the .slurmtainer folder). Bare names such as \"ubuntu:24.04\" are treated as Docker images."
 		},
 		"workspaceFolder": {
 			"type": "string",
@@ -108,7 +108,7 @@
 				},
 				"persistentWorkdirPath": {
 					"type": "string",
-					"description": "Location of the persistent workdir on the cluster (absolute or ~/...). Default: ~/.slurm-devcontainer/work/<project>. Requires persistentWorkdir: true."
+					"description": "Location of the persistent workdir on the cluster (absolute or ~/...). Default: ~/.slurmtainer/work/<project>. Requires persistentWorkdir: true."
 				}
 			}
 		},

@@ -4,14 +4,14 @@
 
 - the devcontainer vscode extension is very useful for developing in sandboxed, isolated environments
 - unfortunately, the devcontainer extension does not support slurm and apptainer
-- goal of this project: a vscode extension `remote-slurm-containers` (display name "Slurm Dev Containers"; formerly `slurm-devcontainer` and `vscode-devcontainer-slurm`), which provides some of the functionality for slurm environments
+- goal of this project: a vscode extension `remote-slurm-containers` (display name "Slurmtainer: Slurm Dev Containers", short "Slurmtainer"; formerly `slurm-devcontainer` and `vscode-devcontainer-slurm`), which provides some of the functionality for slurm environments
 
 ## Users Perspective
 
 Here is an example for the vision of the user's perspective:
 
 - user connects to login node via ssh and runs a vscode session
-- after adding configuration files (`.slurm-devcontainer/slurm-devcontainer.json`), user executes vscode command called, for example, `Open in slurm devcontainer`
+- after adding configuration files (`.slurmtainer/slurmtainer.json`), user executes vscode command called, for example, `Open in slurm devcontainer`
 - vsode will then submit a slurm job for development
 - the slurm jub runs the apptainer container for development, to which vscode will connect and mount and open the project in `/workspaces/{project}` (similar to the actual devcontainer plugin)
 
@@ -32,7 +32,7 @@ Track your todos in the `TODO.md` file.
   1. `probeScript` reads the user, `$HOME`, the environment and the project config on the login node.
   2. `parseConfig` parses and validates the config.
   3. `launchScript` reuses the session's pending/running job or writes `job.sh`, `sshd_config` and `enter.sh` and runs `sbatch`, then waits for `connection`.
-  4. The extension writes the `Host slurm-devcontainer-<cluster>-<project>` block and pins the host key.
+  4. The extension writes the `Host slurmtainer-<cluster>-<project>` block and pins the host key.
   5. `vscode.openFolder(vscode-remote://ssh-remote+<alias>/workspaces/<project>)`.
 - **In the job** (`jobScript`): `apptainer instance start`, then the compute node's own `sshd` runs as the user on a free port. `ForceCommand enter.sh` runs every SSH session inside the instance via `apptainer exec instance://…`. Remote-SSH connects with `ProxyJump <login alias>`.
 - **Modules:**
@@ -44,16 +44,17 @@ Track your todos in the `TODO.md` file.
   - `authority.ts`: parsing `ssh-remote+…` authorities;
   - `containerWindow.ts`: installs `customizations.vscode.extensions`.
 - **State:**
-  - local: `~/.ssh/slurm-devcontainer/` holds `config`, a key pair and `known_hosts`;
-  - cluster: `~/.slurm-devcontainer/` holds `ssh/` (sshd host key, `authorized_keys`), `sessions/<project>/` (generated files, `job.log`, `connection`) and `work/<project>/` (persistent Apptainer workdir: the container's `/tmp`, `/var/tmp` and home).
+  - local: `~/.ssh/slurmtainer/` holds `config`, a key pair and `known_hosts`;
+  - cluster: `~/.slurmtainer/` holds `ssh/` (sshd host key, `authorized_keys`), `sessions/<project>/` (generated files, `job.log`, `connection`) and `work/<project>/` (persistent Apptainer workdir: the container's `/tmp`, `/var/tmp` and home).
 
 ## Decisions (agreed with the user; keep unless they reopen them)
 
-- **Never change the user's `~/.ssh/config` without consent.** The only change is one `Include ~/.ssh/slurm-devcontainer/config` line, added after a modal dialog. Everything else lives in extension-owned files.
+- **Never change the user's `~/.ssh/config` without consent.** The only change is one `Include ~/.ssh/slurmtainer/config` line, added after a modal dialog. Everything else lives in extension-owned files.
 - **The user sshd in the job** is the only connection strategy so far. Others (pam_slurm_adopt, `code tunnel`) go behind `ConnectionStrategy`. A Dev Containers-like remote authority resolver is not possible for third-party extensions: the API is proposed-only.
 - **Naming:**
-  - The extension identity is `chillerb.remote-slurm-containers`, with display name "Slurm Dev Containers" and command/setting prefix `remoteSlurmContainers.*`.
-  - The config `.slurm-devcontainer/slurm-devcontainer.json`, the host aliases `slurm-devcontainer-*` and the cluster/local folders deliberately keep the `slurm-devcontainer` stem, just as Microsoft's `remote-containers` kept `.devcontainer`.
+  - The extension identity is `chillerb.remote-slurm-containers`, with display name "Slurmtainer: Slurm Dev Containers", command category "Slurmtainer" and command/setting prefix `remoteSlurmContainers.*` (identity and prefix are kept).
+  - The short name `slurmtainer` is used for everything else: the config `.slurmtainer/slurmtainer.json`, the host aliases `slurmtainer-*`, job and instance names, the cluster/local folders `~/.slurmtainer` and `~/.ssh/slurmtainer`, and env vars (`SLURMTAINER_*`).
+  - The rename from `slurm-devcontainer` (0.4.0) was a clean break: no automatic migration, only a hint when the old config location is found, and the old container list (`globalState` key `remoteSlurmContainers.entries`) is dropped. Manual steps are in the README ("Upgrading from 0.3.x").
 - **Isolated by default:** `apptainer.runArgs` defaults to `["--containall"]` and `apptainer.persistentWorkdir` to `true` (a managed `--workdir` per project), as Dev Containers users expect. An explicit `runArgs` replaces the default entirely.
 - **No automatic magic for Apptainer flags:** nothing is derived from `runArgs` (no detection of `--contain`). The only check is a conflict error when `runArgs` contains `--workdir` while `persistentWorkdir` is on. Rethinking the options (a beginner-friendly isolation switch vs. raw flags for experts) is a Future TODO.
 - **Published on the VS Code Marketplace only.** Open VSX lacks Microsoft's Remote-SSH; see `TODO.md`.
