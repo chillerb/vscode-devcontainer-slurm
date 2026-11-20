@@ -332,8 +332,19 @@ Off by default; the setting `remoteSlurmContainers.forwardSshAgent` turns it on.
    the job with `agent=1` in `connection`.
 3. **Passing `SSH_AUTH_SOCK`:** `--containall` cleans the environment, so `enter.sh` translates the host path
    to the mounted one and exports it as `APPTAINERENV_SSH_AUTH_SOCK`. Remote-SSH reads `SSH_AUTH_SOCK` in its
-   setup script, which runs in the container, so terminals in VS Code get the translated path
-   (`remote.SSH.enableAgentForwarding`, on by default).
+   setup script, which runs in the container (`remote.SSH.enableAgentForwarding`, on by default).
+
+**What you see in the container:** `echo $SSH_AUTH_SOCK` in a VS Code terminal shows
+`/tmp/vscode-ssh-auth-sock-<n>`, not `/mnt/slurmtainer/…`. Remote-SSH's setup script links that stable path
+to the current `SSH_AUTH_SOCK` on every connection (`ln -f -s`), so terminals keep working after a
+reconnect. `readlink "$SSH_AUTH_SOCK"` shows the target, our translated path under `/mnt/slurmtainer/`. The
+mounts are therefore still needed: without them the symlink would point to `/tmp/ssh-XXXX/…`, which doesn't
+exist in the container's own `/tmp`.
+
+**Compared to Dev Containers:** Dev Containers doesn't mount anything. It creates its own socket in the
+container (`/tmp/vscode-ssh-auth-<uuid>.sock`) and relays agent requests through its connection to the local
+agent. That needs code running in the container; this extension only runs locally, so it uses sshd's agent
+forwarding and the mounts instead.
 
 The binds are added only when the setting is on when a job starts; a job started without them keeps running
 without agent forwarding, and the extension says so when connecting. Without the setting, nothing changes

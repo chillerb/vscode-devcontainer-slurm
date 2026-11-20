@@ -97,7 +97,8 @@ fi
 ${exports.join('\n')}
 export ${envPrefix}SLURMTAINER_JOB_ID="$job"
 # A forwarded SSH agent socket lives in the host's /tmp or ~/.ssh/agent, which the job mounts at hidden
-# paths when agent forwarding is on.
+# paths when agent forwarding is on. Remote-SSH's setup script (run through this script) then links its
+# stable /tmp/vscode-ssh-auth-sock-<n> to the translated path, so terminals show that symlink.
 if [ -n "\${SSH_AUTH_SOCK:-}" ] && grep -qx 'agent=1' "$sdir/connection" 2>/dev/null; then
 	case "$SSH_AUTH_SOCK" in
 		"$HOME"/.ssh/agent/*) export ${envPrefix}SSH_AUTH_SOCK=${shellQuote(AGENT_MOUNTS.home)}/"\${SSH_AUTH_SOCK#"$HOME"/.ssh/agent/}" ;;
