@@ -84,7 +84,7 @@
           "type": "boolean",
           "default": false,
           "scope": "machine",
-          "markdownDescription": "Forward your local SSH agent into the containers, so that e.g. `git` over SSH works inside them. Sets `ForwardAgent yes` for the container hosts and mounts the compute node's agent socket directories (`/tmp` and `~/.ssh/agent`) at `/run/slurmtainer/` in the container. Takes effect for newly started jobs. While you are connected, root on the compute node can use your agent."
+          "markdownDescription": "Forward your local SSH agent into the containers, so that e.g. `git` over SSH works inside them. Sets `ForwardAgent yes` for the container hosts and mounts the compute node's agent socket directories (`/tmp` and `~/.ssh/agent`) at `/mnt/slurmtainer/` in the container. Takes effect for newly started jobs. While you are connected, root on the compute node can use your agent."
         },
         "remoteSlurmContainers.connectTimeoutMinutes": {
           "type": "number",

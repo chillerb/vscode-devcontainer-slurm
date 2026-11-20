@@ -155,10 +155,10 @@ Your SSH keys are not in the container. To use them, e.g. for `git` over SSH, tu
 
 It takes effect for jobs started afterwards (**Stop Container Job...**, then connect again). Your local `ssh-agent` must hold the keys (`ssh-add -l`). In a container terminal, `ssh-add -l` should then list them.
 
-What it does: the container host entry gets `ForwardAgent yes`, and the job mounts the compute node's `/tmp` and `~/.ssh/agent` (where sshd creates the forwarded agent socket) at `/run/slurmtainer/host-tmp` and `/run/slurmtainer/host-agent`, with `SSH_AUTH_SOCK` pointing there.
+What it does: the container host entry gets `ForwardAgent yes`, and the job mounts the compute node's `/tmp` and `~/.ssh/agent` (where sshd creates the forwarded agent socket: `/tmp` up to OpenSSH 10.0, `~/.ssh/agent` since OpenSSH 10.1) at `/mnt/slurmtainer/host-tmp` and `/mnt/slurmtainer/host-agent`, with `SSH_AUTH_SOCK` pointing there.
 
 - **Security:** while you are connected, root on the compute node can use your agent (not read your keys). Only enable it on clusters you trust, or use a separate key/agent with only the keys you need there.
-- **Isolation:** the node's `/tmp` becomes visible inside the container at `/run/slurmtainer/host-tmp`.
+- **Isolation:** the node's `/tmp` becomes visible inside the container at `/mnt/slurmtainer/host-tmp`.
 - Keep Remote-SSH's `remote.SSH.enableAgentForwarding` on (the default).
 
 ### Turning isolation off

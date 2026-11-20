@@ -210,7 +210,7 @@ It then:
    ```
    apptainer instance start <runArgs> [--workdir "$workdir"] \
      --bind <project>:<workspaceFolder> [--bind src:dst[:ro] …] \
-     [--bind /tmp:/run/slurmtainer/host-tmp --bind ~/.ssh/agent:/run/slurmtainer/host-agent] <image> "$instance"
+     [--bind /tmp:/mnt/slurmtainer/host-tmp --bind ~/.ssh/agent:/mnt/slurmtainer/host-agent] <image> "$instance"
    ```
    The last two binds are only added with SSH agent forwarding on.
    The instance runs in the background inside the job's cgroup, so Slurm's resource limits apply to it.
@@ -323,10 +323,12 @@ Off by default; the setting `remoteSlurmContainers.forwardSshAgent` turns it on.
 
 1. **Forwarding to the compute node:** the host entry gets `ForwardAgent yes`, so ssh forwards your local
    agent to the job's sshd. sshd creates a socket for it, in `/tmp/ssh-XXXX/agent.N` (OpenSSH < 10.1) or
-   `~/.ssh/agent/` (OpenSSH ≥ 10.1), and sets `SSH_AUTH_SOCK` for the session.
+   `~/.ssh/agent/` (OpenSSH ≥ 10.1, see its release notes), and sets `SSH_AUTH_SOCK` for the session. Newer sshd
+   versions can choose the location with `AgentSocketPath`, but older ones refuse to start with that keyword,
+   so the generated `sshd_config` doesn't use it.
 2. **Making the socket visible in the container:** with `--containall`, neither the host's `/tmp` nor your
    home is visible, and binds can't be added to a running instance. So `job.sh` binds both directories at
-   instance start to hidden paths, `/run/slurmtainer/host-tmp` and `/run/slurmtainer/host-agent`, and marks
+   instance start to hidden paths, `/mnt/slurmtainer/host-tmp` and `/mnt/slurmtainer/host-agent`, and marks
    the job with `agent=1` in `connection`.
 3. **Passing `SSH_AUTH_SOCK`:** `--containall` cleans the environment, so `enter.sh` translates the host path
    to the mounted one and exports it as `APPTAINERENV_SSH_AUTH_SOCK`. Remote-SSH reads `SSH_AUTH_SOCK` in its

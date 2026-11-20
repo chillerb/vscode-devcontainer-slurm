@@ -373,7 +373,7 @@ echo RUNNING
 			assert.strictEqual(fs.statSync(path.join(home, '.ssh', 'agent')).mode & 0o777, 0o700);
 			const started = fs.readFileSync(path.join(home, 'apptainer.log'), 'utf8').split('\n');
 			assert.deepStrictEqual(started.slice(7, 11), [
-				'--bind', '/tmp:/run/slurmtainer/host-tmp', '--bind', `${home}/.ssh/agent:/run/slurmtainer/host-agent`,
+				'--bind', '/tmp:/mnt/slurmtainer/host-tmp', '--bind', `${home}/.ssh/agent:/mnt/slurmtainer/host-agent`,
 			]);
 
 			const enter = (sock?: string) => {
@@ -386,8 +386,8 @@ echo RUNNING
 				assert.strictEqual(result.status, 0, result.stderr);
 				return /^SOCK=(.*)$/m.exec(result.stdout)![1];
 			};
-			assert.strictEqual(enter('/tmp/ssh-AbC123/agent.42'), '/run/slurmtainer/host-tmp/ssh-AbC123/agent.42');
-			assert.strictEqual(enter(`${home}/.ssh/agent/s.xyz.agent.abc`), '/run/slurmtainer/host-agent/s.xyz.agent.abc');
+			assert.strictEqual(enter('/tmp/ssh-AbC123/agent.42'), '/mnt/slurmtainer/host-tmp/ssh-AbC123/agent.42');
+			assert.strictEqual(enter(`${home}/.ssh/agent/s.xyz.agent.abc`), '/mnt/slurmtainer/host-agent/s.xyz.agent.abc');
 			assert.strictEqual(enter('/elsewhere/agent.sock'), '');
 			assert.strictEqual(enter(), '');
 		} finally {
