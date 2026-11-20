@@ -12,7 +12,7 @@
 	},
 
 	"mounts": [
-		"type=volume,source=claude,target=/claude"
+		"type=volume,source=claude,target=/home/vscode/claude"
 	],
 
 	"runArgs": [
@@ -28,7 +28,7 @@
 	},
 
 	"containerEnv": {
-	  "CLAUDE_CONFIG_DIR": "/claude"
+	  "CLAUDE_CONFIG_DIR": "/home/vscode/claude"
 	},
 
 	// install vcc tool: https://vcc-cli-wiki.virtualcellchallenge.org/
@@ -44,5 +44,5 @@
 	// "customizations": {},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	"remoteUser": "root"
+	// "remoteUser": "root"
 }
