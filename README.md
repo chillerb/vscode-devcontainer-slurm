@@ -25,6 +25,8 @@ You describe the container in `.slurm-devcontainer/slurm-devcontainer.json`. Wit
 - Remote-SSH connects to that sshd through the login node (`ProxyJump`). The connection uses a host entry that the extension writes into its own file, `~/.ssh/slurm-devcontainer/config`.
 - The extension remembers each dev container (login node + project path). **Connect to Container...** works from any window, and later connects reuse the running job or start a new one.
 
+The details are in [docs/how-it-works.md](docs/how-it-works.md): the generated scripts, `job.sh`, `sshd_config`, `enter.sh` and how VS Code reaches the server inside the container.
+
 ## Requirements
 
 **On your computer**
