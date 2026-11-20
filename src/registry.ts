@@ -71,10 +71,13 @@ export class Registry {
 		if (existing) {
 			return this.update(existing.alias, { lastUsed: now });
 		}
+		// Sessions are unique per cluster; aliases must be unique across clusters ("a" + "b-c" and "a-b" + "c" both
+		// give slurmtainer-a-b-c).
 		const taken = new Set(this.list().filter(e => e.cluster === cluster).map(e => e.session));
+		const aliases = new Set(this.list().map(e => e.alias));
 		const base = defaultSessionName(normalized, config);
 		let session = base;
-		for (let i = 2; taken.has(session); i++) {
+		for (let i = 2; taken.has(session) || aliases.has(hostAlias(cluster, session)); i++) {
 			session = `${base}-${i}`;
 		}
 		const project = path.posix.basename(normalized) || normalized;

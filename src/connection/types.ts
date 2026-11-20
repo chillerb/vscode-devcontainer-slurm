@@ -6,6 +6,8 @@ export interface JobContext {
 	jobName: string;
 	/** Absolute project path on the cluster. */
 	projectPath: string;
+	/** Path of the configuration file relative to the project, e.g. `.slurmtainer/gpu/slurmtainer.json`. */
+	configPath: string;
 	config: DevcontainerConfig;
 	/** Absolute session directory on the cluster (`~/.slurmtainer/sessions/<session>`). */
 	sessionDir: string;

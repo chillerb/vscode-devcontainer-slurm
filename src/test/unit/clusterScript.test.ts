@@ -63,7 +63,7 @@ printf 'ARG:%s\\n' "$@"
 			connection: { sshdPath: path.join(bin, 'fake-sshd') },
 		}), { localWorkspaceFolder: project, localEnv: {} });
 		ctx = {
-			session: 'my-project', jobName: 'slurmtainer-my-project', projectPath: project, config,
+			session: 'my-project', jobName: 'slurmtainer-my-project', projectPath: project, configPath: CONFIG_FILE, config,
 			...clusterPaths(home, 'my-project'),
 		};
 	});
@@ -211,13 +211,22 @@ echo "42;cluster"
 		const other = launchScript({ ctx: { ...ctx, projectPath: '/elsewhere' }, strategy: sshdStrategy, authorizedKey: 'k', timeoutSeconds: 5, pollSeconds: 1 });
 		const conflict = bash(other, env);
 		assert.strictEqual(conflict.status, 3);
-		assert.match(new Map(marked(conflict.stdout)).get('error')!, /in use by .*my project \(job 42\)/);
+		assert.match(new Map(marked(conflict.stdout)).get('error')!, /in use by .*my project\/\.slurmtainer\/slurmtainer\.json \(job 42\)/);
+
+		// Neither must another configuration of the same project that got the same session name.
+		const otherConfig = launchScript({ ctx: { ...ctx, configPath: '.slurmtainer/gpu/slurmtainer.json' }, strategy: sshdStrategy, authorizedKey: 'k', timeoutSeconds: 5, pollSeconds: 1 });
+		assert.strictEqual(bash(otherConfig, env).status, 3);
+
+		// A session written by 0.4.0 (project path only) stays usable for that project's running job.
+		fs.writeFileSync(path.join(ctx.sessionDir, 'project'), `${project}\n`);
+		assert.strictEqual(new Map(marked(bash(script, env).stdout)).get('reusing'), '42');
+		assert.strictEqual(fs.readFileSync(path.join(ctx.sessionDir, 'project'), 'utf8'), `${project}/${CONFIG_FILE}\n`);
 
 		// Once that job has ended, the other project takes the session over.
 		fs.rmSync(path.join(home, 'existing'));
 		const takeover = bash(other, env);
 		assert.strictEqual(takeover.status, 0, takeover.stdout + takeover.stderr);
-		assert.strictEqual(fs.readFileSync(path.join(ctx.sessionDir, 'project'), 'utf8'), '/elsewhere\n');
+		assert.strictEqual(fs.readFileSync(path.join(ctx.sessionDir, 'project'), 'utf8'), `/elsewhere/${CONFIG_FILE}\n`);
 	});
 
 	test('launch retries transient squeue failures and detects jobs that left the queue', () => {

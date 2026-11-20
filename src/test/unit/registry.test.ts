@@ -44,6 +44,14 @@ suite('registry', () => {
 		assert.strictEqual(clash.session, 'proj-gpu-2');
 	});
 
+	test('host aliases are unique across clusters', async () => {
+		const registry = new Registry(new MemoryStore());
+		const first = await registry.register('a', '/p/b-c', '', 1);
+		const second = await registry.register('a-b', '/p/c', '', 2);
+		assert.strictEqual(first.alias, 'slurmtainer-a-b-c');
+		assert.deepStrictEqual([second.session, second.alias], ['c-2', 'slurmtainer-a-b-c-2']);
+	});
+
 	test('drops the entries of versions before the rename', async () => {
 		const store = new MemoryStore();
 		await store.update('remoteSlurmContainers.entries', [{ alias: 'slurm-devcontainer-c-p' }]);

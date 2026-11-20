@@ -170,14 +170,20 @@ if ! jobs=$(squeue -h -u "$(id -un)" -n ${shellQuote(ctx.jobName)} -t ${ACTIVE_S
 	exit 6
 fi
 job=\${jobs%%$'\\n'*}
-# Session folders are named after the project folder. Another project with the same name may take over
-# the session once its job has ended (e.g. after it was removed from the list).
+# Session folders are named after the project folder (and configuration). Another project or configuration with
+# the same name may take over the session once its job has ended (e.g. after it was removed from the list).
+# The owner is the absolute path of the configuration file; 0.4.0 wrote only the project path, which is accepted
+# for a running job of the same project.
 project=${shellQuote(ctx.projectPath)}
-if [ -n "$job" ] && [ -f "$sdir/project" ] && [ "$(cat "$sdir/project")" != "$project" ]; then
-	say "error=Session ${ctx.session} is in use by $(cat "$sdir/project") (job $job). Stop that job first (scancel $job)."
-	exit 3
+owner=${shellQuote(`${ctx.projectPath}/${ctx.configPath}`)}
+if [ -n "$job" ] && [ -f "$sdir/project" ]; then
+	current=$(cat "$sdir/project")
+	if [ "$current" != "$owner" ] && [ "$current" != "$project" ]; then
+		say "error=Session ${ctx.session} is in use by $current (job $job). Stop that job first (scancel $job)."
+		exit 3
+	fi
 fi
-printf '%s\\n' "$project" > "$sdir/project"
+printf '%s\\n' "$owner" > "$sdir/project"
 if [ -n "$job" ]; then
 	say "reusing=$job"
 else
@@ -360,7 +366,7 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 0' TERM INT
 ${modules}apptainer=$(command -v "$apptainer") || { log "$apptainer not found"; exit 1; }
-log "job $SLURM_JOB_ID on $(hostname): starting ${config.image}"
+log "job $SLURM_JOB_ID on $(hostname): starting "${shellQuote(config.image)}
 if ! "$apptainer" instance start ${startArgs.join(' ')}; then
 	log "failed to start the container instance"
 	exit 1

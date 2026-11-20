@@ -214,7 +214,7 @@ export class Sessions {
 			const config = parseConfig(probed.text, { localWorkspaceFolder: entry.projectPath, localEnv: probe.env }, relPath);
 			const home = probe.home;
 			const ctx = {
-				session: entry.session, jobName: jobName(entry.session), projectPath: entry.projectPath, config,
+				session: entry.session, jobName: jobName(entry.session), projectPath: entry.projectPath, configPath: relPath, config,
 				forwardSshAgent: settings.forwardSshAgent,
 				...clusterPaths(home, entry.session),
 			};
