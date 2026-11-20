@@ -4,6 +4,22 @@ All notable changes to the "remote-slurm-containers" extension will be documente
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.4.1] - 2026-11-20
+
+### Fixed
+
+- `remoteSlurmContainers.templateDirectories` and `remoteSlurmContainers.forwardSshAgent` can now be set in your user settings. They were machine-scoped, so in a Remote-SSH window they could only be set in the remote settings on the login node.
+- `remoteSlurmContainers.sshPath`, `templateDirectories` and `forwardSshAgent` can only be set in user settings. In a Remote-SSH window, workspace settings come from the project on the cluster, which must not choose the local program that is run, local folders to copy from, or turn on agent forwarding.
+- The configuration picker labels configurations by folder name (`default`, `gpu`, …) and shows their `"name"` with variables resolved. Configurations made from the starter template were all labelled `${localWorkspaceFolderBasename}`.
+- Template folders and files that are symlinks (e.g. from a dotfiles repository) are found and copied.
+- Two configurations that end up with the same session name no longer share a job; the session on the cluster now records its configuration file.
+- Host aliases are unique across clusters, and the image name in the job log line is shell-quoted.
+
+### Documentation
+
+- With agent forwarding on, `SSH_AUTH_SOCK` in container terminals is Remote-SSH's `/tmp/vscode-ssh-auth-sock-<n>`, a symlink to the socket mounted under `/mnt/slurmtainer/`. This is expected.
+- Session and workdir folders are named `<project>-<config>` for named configurations; the upgrade steps say to move `~/.slurm-devcontainer` before connecting with 0.4.x.
+
 ## [v0.4.0] - 2026-11-20
 
 ### Added
