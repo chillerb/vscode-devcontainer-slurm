@@ -177,7 +177,7 @@ function parseConfigBody(text: string, vars: ConfigVariables, relPath: string): 
 	const vscodeCustomizations = optObject(customizations, 'vscode', 'customizations.vscode') ?? {};
 
 	return {
-		name: optString(raw, 'name'),
+		name: mapOptional(optString(raw, 'name'), subst),
 		image: resolveImage(subst(image), vars.localWorkspaceFolder, relPath),
 		workspaceFolder,
 		containerEnv: mapValues(optStringMap(raw, 'containerEnv'), subst),
@@ -356,63 +356,4 @@ function optStringMap(obj: Record<string, unknown>, key: string): Record<string,
 
 function mapValues(obj: Record<string, string>, fn: (s: string) => string): Record<string, string> {
 	return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]));
-}
-
-/** Commented starter configuration written by the "Add Configuration File" command. */
-export function configTemplate(name: string): string {
-	return `// Configuration for the Slurmtainer extension (Slurm Dev Containers).
-// Format: a subset of devcontainer.json (https://containers.dev) plus "slurm", "apptainer" and "connection".
-{
-	"name": ${JSON.stringify(name)},
-
-	// Apptainer image: "docker://…", "oras://…", "library://…" or a path to a .sif file.
-	// Bare names such as "ubuntu:24.04" are treated as Docker images.
-	"image": "docker://mcr.microsoft.com/devcontainers/base:ubuntu",
-
-	// The project folder is mounted here inside the container.
-	"workspaceFolder": "/workspaces/\${localWorkspaceFolderBasename}",
-
-	// Environment variables inside the container. \${localEnv:VAR} reads VAR on the login node.
-	"containerEnv": {},
-
-	// Additional bind mounts, e.g. "source=/scratch/\${localEnv:USER},target=/scratch,type=bind".
-	"mounts": [],
-
-	"customizations": {
-		"vscode": {
-			// Extensions installed inside the container window.
-			"extensions": []
-		}
-	},
-
-	// Resources of the Slurm job (translated into #SBATCH lines).
-	"slurm": {
-		"time": "08:00:00",
-		"cpusPerTask": 4,
-		"mem": "16G"
-		// "partition": "gpu",
-		// "gpus": 1,  // also add "--nv" to apptainer.runArgs
-		// "account": "my-project",
-		// "sbatchArgs": ["--qos=normal"]
-	},
-
-	"apptainer": {
-		// Environment modules loaded before running apptainer, e.g. ["apptainer"].
-		"modules": [],
-		// Extra arguments for "apptainer instance start". "--containall" isolates the container from your
-		// home directory, the host's /tmp, the admins' bind paths and the host's processes. Keep it when
-		// adding flags, e.g. ["--containall", "--nv"] for NVIDIA GPUs. Use [] for an unisolated container
-		// that sees your home directory and the host's paths.
-		"runArgs": ["--containall"],
-		// Keep the container's /tmp, /var/tmp and home in a persistent directory on disk (apptainer --workdir).
-		// Needed with "--contain"/"--containall": otherwise they live on a tiny temporary filesystem
-		// (64 MiB by default), too small for the VS Code server and lost after every job. With a persistent
-		// workdir, the VS Code server and extensions are downloaded only once. It has no effect without
-		// "--contain"/"--containall". Set it to false if you pass your own --workdir in "runArgs".
-		"persistentWorkdir": true
-		// Optional location; default: ~/.slurmtainer/work/<project> on the cluster.
-		// "persistentWorkdirPath": "~/containers/\${localWorkspaceFolderBasename}"
-	}
-}
-`;
 }

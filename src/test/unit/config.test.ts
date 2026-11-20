@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { ConfigError, configDisplayName, configFromPath, configPath, configTemplate, parseConfig, resolveImage, substitute } from '../../config';
+import { ConfigError, configDisplayName, configFromPath, configPath, parseConfig, resolveImage, substitute } from '../../config';
 
 const vars = { localWorkspaceFolder: '/home/jdoe/projects/my-project', localEnv: { USER: 'jdoe', HOME: '/home/jdoe' } };
 
@@ -63,8 +63,6 @@ suite('config', () => {
 		assert.deepStrictEqual(apptainer({ runArgs: [] }).runArgs, []);
 		assert.deepStrictEqual(apptainer({ runArgs: ['--nv'] }).runArgs, ['--nv']);
 		assert.strictEqual(apptainer({ persistentWorkdir: false }).persistentWorkdir, false);
-		const template = parseConfig(configTemplate('demo'), vars).apptainer;
-		assert.deepStrictEqual([template.runArgs, template.persistentWorkdir], [['--containall'], true]);
 	});
 
 	test('rejects a --workdir in runArgs together with persistentWorkdir', () => {
@@ -108,10 +106,8 @@ suite('config', () => {
 		assert.strictEqual(resolveImage('../images/a.sif', ws), '/home/jdoe/p/images/a.sif');
 	});
 
-	test('template is a valid config', () => {
-		const config = parseConfig(configTemplate('demo'), vars);
-		assert.strictEqual(config.name, 'demo');
-		assert.strictEqual(config.workspaceFolder, '/workspaces/my-project');
+	test('the name can use variables', () => {
+		assert.strictEqual(parseConfig('{ "image": "x", "name": "${localWorkspaceFolderBasename} (GPU)" }', vars).name, 'my-project (GPU)');
 	});
 
 	test('configuration paths', () => {

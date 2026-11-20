@@ -71,6 +71,15 @@
           "default": true,
           "description": "Open the container in a new window instead of replacing the current one."
         },
+        "remoteSlurmContainers.templateDirectories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "machine",
+          "markdownDescription": "Folders on this computer with your own configuration templates for **Add Configuration File...**. Each subfolder containing a `slurmtainer.json` is a template; all its files are copied. A template overrides a built-in one with the same name. `~/` is expanded."
+        },
         "remoteSlurmContainers.connectTimeoutMinutes": {
           "type": "number",
           "default": 30,

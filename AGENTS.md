@@ -36,7 +36,8 @@ Track your todos in the `TODO.md` file.
   5. `vscode.openFolder(vscode-remote://ssh-remote+<alias>/workspaces/<project>)`.
 - **In the job** (`jobScript`): `apptainer instance start`, then the compute node's own `sshd` runs as the user on a free port. `ForceCommand enter.sh` runs every SSH session inside the instance via `apptainer exec instance://…`. Remote-SSH connects with `ProxyJump <login alias>`.
 - **Modules:**
-  - `config.ts`: config parsing, defaults, `${…}` substitution and the starter template;
+  - `config.ts`: config parsing, defaults, `${…}` substitution and config paths;
+  - `templates.ts` + `templates/`: built-in config templates and the user's `templateDirectories`, used by `addConfig.ts`;
   - `clusterScript.ts`: all generated bash;
   - `connection/`: the `ConnectionStrategy` interface and `sshd` implementation;
   - `sshConfig.ts`: local SSH files;

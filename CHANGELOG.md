@@ -9,6 +9,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Added
 
 - Several configurations per project, like Dev Containers: `.slurmtainer/slurmtainer.json` and `.slurmtainer/<name>/slurmtainer.json`. With more than one, the extension asks which to use; each is a separate dev container with its own job.
+- Configuration templates: **Add Configuration File...** offers the built-in `default` and `gpu` templates and your own ones from the new setting `remoteSlurmContainers.templateDirectories` (folders on your computer). It can create the default or a named configuration.
+- `"name"` in the configuration supports variables such as `${localWorkspaceFolderBasename}`.
 
 ### Changed
 

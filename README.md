@@ -97,6 +97,29 @@ Like Dev Containers, a project can have more than one configuration, for example
 
 When there are several, **Open Folder in Container** and **Add Container...** ask which one to use. The list shows each configuration's `"name"`. Each configuration is a separate dev container with its own job, host entry and persistent workdir; **Connect to Container...** lists them as `my-project (gpu)`. Relative image paths are resolved against the folder of the configuration file.
 
+### Templates
+
+**Add Configuration File...** creates a configuration from a template. Built-in templates:
+
+- `default`: a commented starter configuration with all options;
+- `gpu`: a CUDA image with `--nv` and one GPU.
+
+You can add your own templates, e.g. for your group's images and partitions. A template is a folder containing a `slurmtainer.json` and optionally more files, for example an Apptainer `.def` file or a script; all of them are copied. Put template folders into a directory on your computer and list it in the settings:
+
+```jsonc
+"remoteSlurmContainers.templateDirectories": ["~/slurmtainer-templates"]
+```
+
+```
+~/slurmtainer-templates/
+├── pytorch/slurmtainer.json
+└── my-lab/
+    ├── slurmtainer.json
+    └── image.def          # referenced by a relative path in slurmtainer.json
+```
+
+The folder name is the template name; a template with the same name as a built-in one replaces it. The command asks whether to create the default configuration or a named one (`.slurmtainer/<name>/`), and never overwrites existing files. Templates can use variables such as `${localWorkspaceFolderBasename}`, also in `"name"`; they are resolved when connecting.
+
 ## Isolation
 
 Containers are **isolated by default**, as you know it from Dev Containers. The defaults are:
@@ -143,7 +166,7 @@ Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"pers
 | Stop Container Job... | Cancels the Slurm job (`scancel`). |
 | Remove Container from List... | Forgets a dev container, optionally stopping its job first. |
 | Show Job Log... | Shows the job's output (container start-up, sshd). |
-| Add Configuration File... | Creates a commented `.slurmtainer/slurmtainer.json`. |
+| Add Configuration File... | Creates a commented `.slurmtainer/slurmtainer.json` or a named `.slurmtainer/<name>/slurmtainer.json` from a template (see [Templates](#templates)). |
 
 ## Settings
 
@@ -151,6 +174,7 @@ Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"pers
 |---|---|---|
 | `remoteSlurmContainers.sshPath` | `ssh` | Local ssh executable. |
 | `remoteSlurmContainers.openInNewWindow` | `true` | Open containers in a new window. |
+| `remoteSlurmContainers.templateDirectories` | `[]` | Folders on your computer with your own configuration templates (see [Templates](#templates)). |
 | `remoteSlurmContainers.connectTimeoutMinutes` | `30` | How long to wait for a pending job. The job keeps waiting in the queue after a timeout. |
 
 ## Files written by the extension

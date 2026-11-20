@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { addConfigFile } from './addConfig';
 import { installConfiguredExtensions } from './containerWindow';
@@ -14,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		log,
-		command('addConfig', addConfigFile),
+		command('addConfig', () => addConfigFile(path.join(context.extensionPath, 'templates'), log)),
 		command('open', () => sessions.openCurrentFolder()),
 		command('connect', () => sessions.connectCommand()),
 		command('add', () => sessions.addEntry()),

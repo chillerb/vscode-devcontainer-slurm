@@ -1,0 +1,36 @@
+// Configuration for the Slurmtainer extension (Slurm Dev Containers): a container with NVIDIA GPUs.
+// Format: a subset of devcontainer.json (https://containers.dev) plus "slurm", "apptainer" and "connection".
+{
+	"name": "${localWorkspaceFolderBasename} (GPU)",
+
+	// An image with the CUDA libraries. The NVIDIA driver comes from the host through "--nv".
+	"image": "docker://nvidia/cuda:12.6.3-devel-ubuntu24.04",
+
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+	"containerEnv": {},
+	"mounts": [],
+
+	"customizations": {
+		"vscode": {
+			"extensions": []
+		}
+	},
+
+	"slurm": {
+		// Most clusters have a separate GPU partition; check "sinfo" for its name.
+		// "partition": "gpu",
+		"gpus": 1,
+		// Some sites expect --gres instead of --gpus, e.g. "sbatchArgs": ["--gres=gpu:a100:1"] without "gpus".
+		"time": "04:00:00",
+		"cpusPerTask": 8,
+		"mem": "32G"
+	},
+
+	"apptainer": {
+		"modules": [],
+		// "--nv" makes the host's NVIDIA driver and GPUs available in the container.
+		"runArgs": ["--containall", "--nv"],
+		"persistentWorkdir": true
+	}
+}
