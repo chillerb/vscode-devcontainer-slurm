@@ -24,15 +24,13 @@ suite('templates', () => {
 		fs.writeFileSync(path.join(tmp, file), content);
 	}
 
-	test('built-in templates are valid configurations', async () => {
+	test('the built-in starter template is a valid configuration', async () => {
 		const templates = await listTemplates(BUILTIN, []);
-		assert.deepStrictEqual(templates.map(t => [t.name, t.source]), [['default', 'built-in'], ['gpu', 'built-in']]);
+		assert.deepStrictEqual(templates.map(t => [t.name, t.source]), [['default', 'built-in']]);
 		const vars = { localWorkspaceFolder: '/home/jdoe/my-project', localEnv: {} };
 		const defaults = parseConfig(fs.readFileSync(path.join(BUILTIN, 'default', 'slurmtainer.json'), 'utf8'), vars);
 		assert.strictEqual(defaults.name, 'my-project');
 		assert.deepStrictEqual([defaults.apptainer.runArgs, defaults.apptainer.persistentWorkdir], [['--containall'], true]);
-		const gpu = parseConfig(fs.readFileSync(path.join(BUILTIN, 'gpu', 'slurmtainer.json'), 'utf8'), vars);
-		assert.deepStrictEqual([gpu.name, gpu.slurm.gpus, gpu.apptainer.runArgs], ['my-project (GPU)', '1', ['--containall', '--nv']]);
 	});
 
 	test('user templates come first and override built-in ones', async () => {

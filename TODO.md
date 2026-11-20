@@ -33,7 +33,7 @@ extension-owned files in `~/.ssh/slurmtainer/`. The user's `~/.ssh/config` is on
 - [x] Manual end-to-end test on real Slurm clusters: the published extension starts and connects to containers on two clusters
 - [x] Rename the `slurm-devcontainer` stem to `slurmtainer` (config, folders, aliases, job/instance names, env vars; display name "Slurmtainer: Slurm Dev Containers"), clean break with a hint for old config locations and README upgrade steps
 - [x] Several configurations per project (`.slurmtainer/<name>/slurmtainer.json`, quick pick, one entry/session/job per configuration)
-- [x] Configuration templates: built-in `default` and `gpu`, own templates from local `templateDirectories`; Add Configuration File creates the default or a named configuration
+- [x] Configuration templates: the commented starter as built-in `default` (no other built-in templates, on purpose), own templates from local `templateDirectories`; Add Configuration File creates the default or a named configuration
 - [x] Opt-in SSH agent forwarding into the container (`forwardSshAgent`: `ForwardAgent yes`, socket directories bound at `/run/slurmtainer/`, `SSH_AUTH_SOCK` translated in `enter.sh`)
 
 ## Future

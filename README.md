@@ -99,10 +99,7 @@ When there are several, **Open Folder in Container** and **Add Container...** as
 
 ### Templates
 
-**Add Configuration File...** creates a configuration from a template. Built-in templates:
-
-- `default`: a commented starter configuration with all options;
-- `gpu`: a CUDA image with `--nv` and one GPU.
+**Add Configuration File...** creates a configuration from a template. Only one template is built in: `default`, a commented starter configuration listing all options.
 
 You can add your own templates, e.g. for your group's images and partitions. A template is a folder containing a `slurmtainer.json` and optionally more files, for example an Apptainer `.def` file or a script; all of them are copied. Put template folders into a directory on your computer and list it in the settings:
 
@@ -118,7 +115,7 @@ You can add your own templates, e.g. for your group's images and partitions. A t
     └── image.def          # referenced by a relative path in slurmtainer.json
 ```
 
-The folder name is the template name; a template with the same name as a built-in one replaces it. The command asks whether to create the default configuration or a named one (`.slurmtainer/<name>/`), and never overwrites existing files. Templates can use variables such as `${localWorkspaceFolderBasename}`, also in `"name"`; they are resolved when connecting.
+The folder name is the template name; a template named `default` replaces the built-in starter. The command asks whether to create the default configuration or a named one (`.slurmtainer/<name>/`), and never overwrites existing files. Templates can use variables such as `${localWorkspaceFolderBasename}`, also in `"name"`; they are resolved when connecting.
 
 ## Isolation
 
