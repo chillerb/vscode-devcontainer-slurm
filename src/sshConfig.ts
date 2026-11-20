@@ -86,20 +86,6 @@ export function addInclude(text: string): string {
 	return `# Added by the Slurmtainer extension (VS Code)\nInclude ${INCLUDE_TARGET}\n\n${text}`;
 }
 
-/** Concrete host aliases (no wildcards, not ours) defined in an ssh config, for picking a login node. */
-export function listHosts(text: string): string[] {
-	const hosts = new Set<string>();
-	for (const line of text.split(/\r?\n/)) {
-		const m = /^\s*host\s+(.*)$/i.exec(line);
-		for (const alias of m ? m[1].trim().split(/\s+/) : []) {
-			if (!/[*?!]/.test(alias) && !alias.startsWith(`${PREFIX}-`)) {
-				hosts.add(alias);
-			}
-		}
-	}
-	return [...hosts];
-}
-
 /** Replaces the known_hosts entry of `alias` with `hostKey` (`ssh-ed25519 AAAA… comment`). */
 export function upsertKnownHost(text: string, alias: string, hostKey: string): string {
 	const [type, key] = hostKey.trim().split(/\s+/);
@@ -140,10 +126,6 @@ export class LocalSsh {
 		if (!hasInclude(text, this.home)) {
 			await fs.writeFile(file, addInclude(text), { mode: 0o600 });
 		}
-	}
-
-	async listUserHosts(): Promise<string[]> {
-		return listHosts(await readOrEmpty(this.userConfigPath));
 	}
 
 	async writeHost(alias: string, options: Record<string, string>): Promise<void> {

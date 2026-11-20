@@ -18,7 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
 		command('addConfig', () => addConfigFile(path.join(context.extensionPath, 'templates'), log)),
 		command('open', () => sessions.openCurrentFolder()),
 		command('connect', () => sessions.connectCommand()),
-		command('add', () => sessions.addEntry()),
 		command('stop', () => sessions.stopCommand()),
 		command('remove', () => sessions.removeCommand()),
 		command('showLog', () => sessions.showLogCommand()),

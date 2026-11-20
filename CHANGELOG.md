@@ -13,6 +13,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Opt-in SSH agent forwarding into the container with the new setting `remoteSlurmContainers.forwardSshAgent`, so that e.g. `git` over SSH works with your local keys.
 - `"name"` in the configuration supports variables such as `${localWorkspaceFolderBasename}`.
 
+### Removed
+
+- The command **Add Container...** (also offered in **Connect to Container...**). Add a container with **Open Folder in Container** from a Remote-SSH window on the login node; known containers still reconnect from any window with **Connect to Container...**.
+
 ### Changed
 
 - **Breaking:** renamed from `slurm-devcontainer` to `slurmtainer`. The display name is now "Slurmtainer: Slurm Dev Containers" and the commands are listed under "Slurmtainer". The extension ID and the `remoteSlurmContainers.*` settings are unchanged. There is no automatic migration; see "Upgrading from 0.3.x" in the README:

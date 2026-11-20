@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
-	addInclude, hasInclude, LocalSsh, listHosts, parseHostBlocks, removeHostBlock, upsertHostBlock, upsertKnownHost,
+	addInclude, hasInclude, LocalSsh, parseHostBlocks, removeHostBlock, upsertHostBlock, upsertKnownHost,
 } from '../../sshConfig';
 
 suite('sshConfig', () => {
@@ -28,11 +28,6 @@ suite('sshConfig', () => {
 		const updated = addInclude('Host x\n');
 		assert.ok(hasInclude(updated, home));
 		assert.ok(updated.indexOf('Include') < updated.indexOf('Host x'));
-	});
-
-	test('lists concrete hosts of the user config', () => {
-		const text = 'Host *\n  User x\nHost cluster cluster-b\nhost !bad slurmtainer-cluster-p other?\nMatch host foo\n';
-		assert.deepStrictEqual(listHosts(text), ['cluster', 'cluster-b']);
 	});
 
 	test('pins host keys per alias', () => {
@@ -64,7 +59,6 @@ suite('sshConfig', () => {
 			const userConfig = fs.readFileSync(path.join(home, '.ssh', 'config'), 'utf8');
 			assert.strictEqual(userConfig.match(/Include/g)?.length, 1);
 			assert.ok(userConfig.endsWith('Host cluster\n  HostName login\n'));
-			assert.deepStrictEqual(await ssh.listUserHosts(), ['cluster']);
 			await ssh.removeHost('h');
 			assert.deepStrictEqual([...parseHostBlocks(fs.readFileSync(path.join(home, '.ssh', 'slurmtainer', 'config'), 'utf8'))], []);
 		} finally {

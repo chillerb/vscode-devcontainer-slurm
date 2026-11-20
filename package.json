@@ -106,11 +106,6 @@
         "category": "Slurmtainer"
       },
       {
-        "command": "remoteSlurmContainers.add",
-        "title": "Add Container...",
-        "category": "Slurmtainer"
-      },
-      {
         "command": "remoteSlurmContainers.stop",
         "title": "Stop Container Job...",
         "category": "Slurmtainer"

@@ -95,7 +95,7 @@ Like Dev Containers, a project can have more than one configuration, for example
 └── large-mem/slurmtainer.json
 ```
 
-When there are several, **Open Folder in Container** and **Add Container...** ask which one to use. The list shows each configuration's `"name"`. Each configuration is a separate dev container with its own job, host entry and persistent workdir; **Connect to Container...** lists them as `my-project (gpu)`. Relative image paths are resolved against the folder of the configuration file.
+When there are several, **Open Folder in Container** asks which one to use. The list shows each configuration's `"name"`. Each configuration is a separate dev container with its own job, host entry and persistent workdir; **Connect to Container...** lists them as `my-project (gpu)`. Relative image paths are resolved against the folder of the configuration file.
 
 ### Templates
 
@@ -175,7 +175,6 @@ Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"pers
 |---|---|
 | Open Folder in Container | Opens the current Remote-SSH folder (on a login node) in its dev container. |
 | Connect to Container... | Picks a known dev container and connects, starting a job if none is running. |
-| Add Container... | Registers a project by login host and path without opening it first. |
 | Stop Container Job... | Cancels the Slurm job (`scancel`). |
 | Remove Container from List... | Forgets a dev container, optionally stopping its job first. |
 | Show Job Log... | Shows the job's output (container start-up, sshd). |
@@ -212,7 +211,7 @@ Version 0.4.0 renamed everything from `slurm-devcontainer` to `slurmtainer` and 
 2. In each project, rename `.slurm-devcontainer/slurm-devcontainer.json` to `.slurmtainer/slurmtainer.json`. The extension tells you if it finds a file at the old location.
 3. Optional: on each cluster, run `mv ~/.slurm-devcontainer ~/.slurmtainer` to keep the persistent workdirs (container home, VS Code server). Otherwise the new version starts with empty ones.
 4. On your computer, the extension asks once more for an `Include` line, now `Include ~/.ssh/slurmtainer/config`. You can remove the old `Include ~/.ssh/slurm-devcontainer/config` line and the `~/.ssh/slurm-devcontainer/` folder.
-5. The list of known containers starts empty. Open each project again with **Open Folder in Container** or **Add Container...**.
+5. The list of known containers starts empty. Open each project again with **Open Folder in Container**.
 
 ## Logins with 2FA or passwords
 

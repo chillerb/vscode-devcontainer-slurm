@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { sshAuthority, sshDestination, sshHostFromAuthority } from './authority';
+import { sshAuthority, sshHostFromAuthority } from './authority';
 import { clusterPaths, launchScript, logScript, parseConnectionInfo, parseProbe, ProbedConfig, ProbeResult, probeScript, stopScript } from './clusterScript';
 import { CONFIG_FILE, ConfigError, configDisplayName, configPath, parseConfig } from './config';
 import { sshdStrategy } from './connection/sshd';
@@ -92,57 +92,17 @@ export class Sessions {
 		).then(choice => choice && vscode.commands.executeCommand('remoteSlurmContainers.connect'));
 	}
 
-	/** "Add Container...": registers a project by login host and path, from any window. */
-	async addEntry(): Promise<Entry | undefined> {
-		const hosts = await this.localSsh.listUserHosts().catch(() => []);
-		const other = '$(edit) Enter another host...';
-		let cluster = hosts.length === 0 ? other : await vscode.window.showQuickPick([...hosts, other], {
-			title: 'Add Slurm Dev Container (1/2)', placeHolder: 'SSH host of the cluster login node',
-		});
-		if (cluster === other) {
-			cluster = await vscode.window.showInputBox({
-				title: 'Add Slurm Dev Container (1/2)', prompt: 'SSH host of the cluster login node (alias from ~/.ssh/config, user@host or user@host:port)',
-				validateInput: v => /^\S+$/.test(v) ? undefined : 'Enter a host without spaces',
-			});
-		}
-		if (!cluster) {
-			return undefined;
-		}
-		const projectPath = await vscode.window.showInputBox({
-			title: 'Add Slurm Dev Container (2/2)', prompt: `Absolute path of the project folder on ${cluster}`,
-			placeHolder: '/home/user/projects/my-project',
-			validateInput: v => v.startsWith('/') ? undefined : 'Enter an absolute path',
-		});
-		if (!projectPath) {
-			return undefined;
-		}
-		const destination = sshDestination(cluster);
-		const probed = await this.pickConfig(destination, projectPath);
-		if (!probed) {
-			return undefined;
-		}
-		const entry = await this.registry.register(destination, projectPath, probed.config);
-		const choice = await vscode.window.showInformationMessage(`Added ${entry.name} on ${cluster}.`, 'Connect');
-		if (choice) {
-			await this.connect(entry);
-		}
-		return entry;
-	}
-
 	/** "Connect to Container...": picks a known entry and connects, from any window. */
 	async connectCommand(): Promise<void> {
-		const add = '$(add) Add Container...';
-		const entry = await this.pickEntry('Connect to Slurm Dev Container', add);
-		if (entry === add) {
-			await this.addEntry();
-		} else if (entry) {
+		const entry = await this.pickEntry('Connect to Slurm Dev Container');
+		if (entry) {
 			await this.connect(entry);
 		}
 	}
 
 	async stopCommand(): Promise<void> {
 		const entry = this.currentEntry() ?? await this.pickEntry('Stop Slurm Dev Container');
-		if (!entry || typeof entry === 'string') {
+		if (!entry) {
 			return;
 		}
 		const stop = 'Stop Job';
@@ -167,7 +127,7 @@ export class Sessions {
 
 	async removeCommand(): Promise<void> {
 		const entry = await this.pickEntry('Remove Slurm Dev Container from List');
-		if (!entry || typeof entry === 'string') {
+		if (!entry) {
 			return;
 		}
 		const remove = 'Remove';
@@ -188,7 +148,7 @@ export class Sessions {
 
 	async showLogCommand(): Promise<void> {
 		const entry = this.currentEntry() ?? await this.pickEntry('Show Job Log');
-		if (!entry || typeof entry === 'string') {
+		if (!entry) {
 			return;
 		}
 		const result = checkResult(entry.cluster, await runOnCluster(entry.cluster, logScript(entry.session), { sshPath: this.settings.sshPath }));
@@ -201,10 +161,10 @@ export class Sessions {
 		this.log.show();
 	}
 
-	private async pickEntry<T extends string>(title: string, extra?: T): Promise<Entry | T | undefined> {
+	private async pickEntry(title: string): Promise<Entry | undefined> {
 		const entries = this.registry.list();
-		if (entries.length === 0 && !extra) {
-			vscode.window.showInformationMessage('No Slurm Dev Containers yet. Use "Open Folder in Container" or "Add Container...".');
+		if (entries.length === 0) {
+			vscode.window.showInformationMessage('No Slurm Dev Containers yet. Open the project folder on the cluster login node with Remote-SSH and run "Open Folder in Container".');
 			return undefined;
 		}
 		type Item = vscode.QuickPickItem & { entry?: Entry };
@@ -214,11 +174,8 @@ export class Sessions {
 			detail: entry.projectPath,
 			entry,
 		}));
-		if (extra) {
-			items.push({ label: extra });
-		}
 		const picked = await vscode.window.showQuickPick(items, { title, placeHolder: 'Select a dev container', matchOnDescription: true, matchOnDetail: true });
-		return picked?.entry ?? (picked ? extra : undefined);
+		return picked?.entry;
 	}
 
 	/** Finds or submits the job, waits until the container is reachable and opens it. */

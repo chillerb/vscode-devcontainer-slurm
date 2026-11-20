@@ -69,7 +69,7 @@ All scripts are generated in `src/clusterScript.ts`:
 
 | Script | Used by | Purpose |
 |---|---|---|
-| `probeScript` | Open, Add, Connect | Reads the user, `$HOME`, the environment and all configuration files |
+| `probeScript` | Open, Connect | Reads the user, `$HOME`, the environment and all configuration files |
 | `launchScript` | Connect | Reuses or submits the job and waits until it is reachable |
 | `stopScript` | Stop | `squeue` for the session's active jobs, then `scancel`, prints `stopped=<ids>` |
 | `logScript` | Show Job Log | Prints `job.log` as `log=` lines |
@@ -90,8 +90,8 @@ Then `probeScript` runs on the login node and reports:
 | `error` | only if `sbatch` is not on the `PATH` |
 
 **Several configurations:** like Dev Containers, a project can have a default configuration and named ones
-in subfolders (one level deep). **Open Folder in Container** and **Add Container...** run the probe first and
-show a quick pick if there are several. Each configuration is a separate dev container with its own entry,
+in subfolders (one level deep). **Open Folder in Container** runs the probe first and shows a quick pick if
+there are several. Each configuration is a separate dev container with its own entry,
 job and host alias; the entry remembers the configuration folder (`''` for the default one), so
 **Connect to Container...** doesn't ask again.
 
