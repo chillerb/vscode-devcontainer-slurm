@@ -3,7 +3,7 @@ import { sshAuthority, sshDestination, sshHostFromAuthority } from '../../author
 
 suite('authority', () => {
 	test('parses Remote-SSH authorities', () => {
-		assert.strictEqual(sshHostFromAuthority('ssh-remote+marburg'), 'marburg');
+		assert.strictEqual(sshHostFromAuthority('ssh-remote+cluster-a'), 'cluster-a');
 		assert.strictEqual(sshHostFromAuthority('ssh-remote+cafe'), 'cafe');
 		const hex = Buffer.from(JSON.stringify({ hostName: 'login.example.org', user: 'jdoe', port: 2222 })).toString('hex');
 		assert.strictEqual(sshHostFromAuthority(`ssh-remote+${hex}`), 'ssh://jdoe@login.example.org:2222');

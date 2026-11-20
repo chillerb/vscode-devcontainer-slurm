@@ -18,18 +18,18 @@ class MemoryStore implements StateStore {
 suite('registry', () => {
 	test('registers projects with unique session names per cluster', async () => {
 		const registry = new Registry(new MemoryStore());
-		const a = await registry.register('marburg', '/home/j/My Project/', '', 1);
+		const a = await registry.register('cluster-a', '/home/j/My Project/', '', 1);
 		assert.deepStrictEqual(a, {
-			cluster: 'marburg', projectPath: '/home/j/My Project', config: '', session: 'my-project',
-			alias: 'slurmtainer-marburg-my-project', name: 'My Project', lastUsed: 1,
+			cluster: 'cluster-a', projectPath: '/home/j/My Project', config: '', session: 'my-project',
+			alias: 'slurmtainer-cluster-a-my-project', name: 'My Project', lastUsed: 1,
 		});
-		const again = await registry.register('marburg', '/home/j/My Project', '', 2);
+		const again = await registry.register('cluster-a', '/home/j/My Project', '', 2);
 		assert.strictEqual(again.session, 'my-project');
 		assert.strictEqual(again.lastUsed, 2);
-		const clash = await registry.register('marburg', '/scratch/my-project', '', 3);
+		const clash = await registry.register('cluster-a', '/scratch/my-project', '', 3);
 		assert.strictEqual(clash.session, 'my-project-2');
-		const otherCluster = await registry.register('juwels', '/scratch/my-project', '', 4);
-		assert.strictEqual(otherCluster.alias, 'slurmtainer-juwels-my-project');
+		const otherCluster = await registry.register('cluster-b', '/scratch/my-project', '', 4);
+		assert.strictEqual(otherCluster.alias, 'slurmtainer-cluster-b-my-project');
 		assert.deepStrictEqual(registry.list().map(e => e.lastUsed), [4, 3, 2]);
 	});
 

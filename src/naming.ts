@@ -16,7 +16,7 @@ export function defaultSessionName(projectPath: string, config = ''): string {
 	return config ? `${base}-${slug(config)}` : base;
 }
 
-/** SSH host alias of the container, e.g. `slurmtainer-marburg-my-project`. */
+/** SSH host alias of the container, e.g. `slurmtainer-cluster-a-my-project`. */
 export function hostAlias(cluster: string, session: string): string {
 	return `${PREFIX}-${slug(cluster)}-${session}`;
 }
