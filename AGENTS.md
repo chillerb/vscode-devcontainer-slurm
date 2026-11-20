@@ -29,7 +29,7 @@ Track your todos in the `TODO.md` file.
 
 - **UI extension** (`extensionKind: ["ui"]`): it always runs on the user's computer, also in Remote-SSH windows. It talks to clusters through the local `ssh <alias>` (`src/remote.ts`, `BatchMode=yes`) and depends on Microsoft's Remote-SSH (`extensionDependencies`).
 - **Connect flow** (`src/session.ts`):
-  1. `probeScript` reads the user, `$HOME`, the environment and the project config on the login node.
+  1. `probeScript` reads the user, `$HOME`, the environment and all project configs (`.slurmtainer/slurmtainer.json` and `.slurmtainer/<name>/slurmtainer.json`) on the login node; with several, the user picks one. Each (project, config) pair is a separate registry entry, session and job.
   2. `parseConfig` parses and validates the config.
   3. `launchScript` reuses the session's pending/running job or writes `job.sh`, `sshd_config` and `enter.sh` and runs `sbatch`, then waits for `connection`.
   4. The extension writes the `Host slurmtainer-<cluster>-<project>` block and pins the host key.

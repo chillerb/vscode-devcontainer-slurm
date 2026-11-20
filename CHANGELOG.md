@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Added
+
+- Several configurations per project, like Dev Containers: `.slurmtainer/slurmtainer.json` and `.slurmtainer/<name>/slurmtainer.json`. With more than one, the extension asks which to use; each is a separate dev container with its own job.
+
 ### Changed
 
 - **Breaking:** renamed from `slurm-devcontainer` to `slurmtainer`. The display name is now "Slurmtainer: Slurm Dev Containers" and the commands are listed under "Slurmtainer". The extension ID and the `remoteSlurmContainers.*` settings are unchanged. There is no automatic migration; see "Upgrading from 0.3.x" in the README:

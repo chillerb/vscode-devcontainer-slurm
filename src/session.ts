@@ -1,12 +1,12 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { sshAuthority, sshDestination, sshHostFromAuthority } from './authority';
-import { clusterPaths, launchScript, logScript, parseConnectionInfo, probeScript, stopScript } from './clusterScript';
-import { CONFIG_FILE, ConfigError, DevcontainerConfig, parseConfig } from './config';
+import { clusterPaths, launchScript, logScript, parseConnectionInfo, parseProbe, ProbedConfig, ProbeResult, probeScript, stopScript } from './clusterScript';
+import { CONFIG_FILE, ConfigError, configDisplayName, configPath, parseConfig } from './config';
 import { sshdStrategy } from './connection/sshd';
 import { jobName, PREFIX } from './naming';
 import { Entry, Registry } from './registry';
-import { checkResult, lastValue, RemoteError, RunResult, runOnCluster } from './remote';
+import { checkResult, lastValue, RemoteError, runOnCluster } from './remote';
 import { IDENTITY_FILE, INCLUDE_TARGET, KNOWN_HOSTS_FILE, LocalSsh } from './sshConfig';
 
 const POLL_SECONDS = 5;
@@ -56,8 +56,32 @@ export class Sessions {
 			this.notConnectedHint();
 			return;
 		}
-		const entry = await this.registry.register(cluster, folder.uri.path);
+		const probed = await this.pickConfig(cluster, folder.uri.path);
+		if (!probed) {
+			return;
+		}
+		const entry = await this.registry.register(cluster, folder.uri.path, probed.config);
 		await this.connect(entry);
+	}
+
+	/**
+	 * Reads the configurations of a project on the cluster. With several (`.slurmtainer/slurmtainer.json` and
+	 * `.slurmtainer/<name>/slurmtainer.json`), the user picks one; each one is a separate dev container.
+	 */
+	private async pickConfig(cluster: string, projectPath: string): Promise<ProbedConfig | undefined> {
+		const probe = await vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification, title: `Reading configurations on ${cluster}...`,
+		}, async () => parseProbe(checkResult(cluster, await runOnCluster(cluster, probeScript(projectPath), { sshPath: this.settings.sshPath })).values));
+		const configs = requireConfigs(probe, cluster);
+		if (configs.length === 1) {
+			return configs[0];
+		}
+		const picked = await vscode.window.showQuickPick(configs.map(c => ({
+			label: configDisplayName(c.text) ?? (c.config || 'default'),
+			description: c.relPath,
+			probed: c,
+		})), { title: `Select a configuration for ${path.posix.basename(projectPath)}`, matchOnDescription: true });
+		return picked?.probed;
 	}
 
 	private notConnectedHint() {
@@ -91,7 +115,12 @@ export class Sessions {
 		if (!projectPath) {
 			return undefined;
 		}
-		const entry = await this.registry.register(sshDestination(cluster), projectPath);
+		const destination = sshDestination(cluster);
+		const probed = await this.pickConfig(destination, projectPath);
+		if (!probed) {
+			return undefined;
+		}
+		const entry = await this.registry.register(destination, projectPath, probed.config);
 		const choice = await vscode.window.showInformationMessage(`Added ${entry.name} on ${cluster}.`, 'Connect');
 		if (choice) {
 			await this.connect(entry);
@@ -215,9 +244,14 @@ export class Sessions {
 
 			progress.report({ message: 'Reading configuration...' });
 			const authorizedKey = await ssh.ensureKey();
-			const probe = await run(probeScript(entry.projectPath));
-			const config = this.parseProbedConfig(entry, probe);
-			const home = lastValue(probe, 'home')!;
+			const probe = parseProbe((await run(probeScript(entry.projectPath))).values);
+			const relPath = configPath(entry.config);
+			const probed = requireConfigs(probe, entry.cluster).find(c => c.config === entry.config);
+			if (!probed) {
+				throw new ConfigError(`${relPath} no longer exists in ${entry.projectPath} on ${entry.cluster}. Remove the container from the list or restore the file.`);
+			}
+			const config = parseConfig(probed.text, { localWorkspaceFolder: entry.projectPath, localEnv: probe.env }, relPath);
+			const home = probe.home;
 			const ctx = {
 				session: entry.session, jobName: jobName(entry.session), projectPath: entry.projectPath, config,
 				...clusterPaths(home, entry.session),
@@ -255,28 +289,6 @@ export class Sessions {
 		await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: settings.openInNewWindow });
 	}
 
-	private parseProbedConfig(entry: Entry, probe: RunResult): DevcontainerConfig {
-		const get = (key: string) => lastValue(probe, key);
-		const missing = get('config-missing');
-		const legacy = get('legacy-config');
-		if (legacy !== undefined) {
-			throw new ConfigError(`Found an old configuration at ${legacy}. Since version 0.4.0 it is called ${CONFIG_FILE}: `
-				+ 'rename the folder .slurm-devcontainer to .slurmtainer and the file slurm-devcontainer.json to slurmtainer.json.');
-		}
-		if (missing !== undefined) {
-			throw new ConfigError(`No configuration found at ${missing}. Open the project on ${entry.cluster} and run "Slurmtainer: Add Configuration File...".`);
-		}
-		const env: Record<string, string> = {};
-		for (const pair of Buffer.from(get('env') ?? '', 'base64').toString('utf8').split('\0')) {
-			const eq = pair.indexOf('=');
-			if (eq > 0) {
-				env[pair.slice(0, eq)] = pair.slice(eq + 1);
-			}
-		}
-		const text = Buffer.from(get('config') ?? '', 'base64').toString('utf8');
-		return parseConfig(text, { localWorkspaceFolder: entry.projectPath, localEnv: env });
-	}
-
 	/** Makes sure ~/.ssh/config includes our file; only ever changes it with the user's consent. */
 	private async ensureInclude(): Promise<boolean> {
 		const ssh = this.localSsh;
@@ -303,6 +315,18 @@ export class Sessions {
 		}
 		return false;
 	}
+}
+
+/** The configurations found by the probe; throws a helpful error if there are none. */
+function requireConfigs(probe: ProbeResult, cluster: string): ProbedConfig[] {
+	if (probe.legacy !== undefined) {
+		throw new ConfigError(`Found an old configuration at ${probe.legacy}. Since version 0.4.0 it is called ${CONFIG_FILE}: `
+			+ 'rename the folder .slurm-devcontainer to .slurmtainer and the file slurm-devcontainer.json to slurmtainer.json.');
+	}
+	if (probe.configs.length === 0) {
+		throw new ConfigError(`No configuration found in ${probe.missing ?? 'the project'}. Open the project on ${cluster} and run "Slurmtainer: Add Configuration File...".`);
+	}
+	return probe.configs;
 }
 
 /** Runs a command and reports errors to the user. */

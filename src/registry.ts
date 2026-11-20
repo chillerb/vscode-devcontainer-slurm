@@ -7,6 +7,8 @@ export interface Entry {
 	cluster: string;
 	/** Absolute project path on the cluster. */
 	projectPath: string;
+	/** Configuration folder in `.slurmtainer/`; `''` for the default `.slurmtainer/slurmtainer.json`. */
+	config: string;
 	/** Unique per cluster; used for the job name, the session directory and the host alias. */
 	session: string;
 	/** SSH host alias of the container. */
@@ -59,22 +61,26 @@ export class Registry {
 		return this.list().find(e => e.alias === alias);
 	}
 
-	/** Returns the existing entry for the project or creates one with a session name unique on that cluster. */
-	async register(cluster: string, projectPath: string, now = Date.now()): Promise<Entry> {
+	/**
+	 * Returns the existing entry for the project and configuration or creates one with a session name unique on
+	 * that cluster. Each configuration of a project is a separate dev container with its own job.
+	 */
+	async register(cluster: string, projectPath: string, config: string, now = Date.now()): Promise<Entry> {
 		const normalized = path.posix.normalize(projectPath).replace(/(.)\/$/, '$1');
-		const existing = this.list().find(e => e.cluster === cluster && e.projectPath === normalized);
+		const existing = this.list().find(e => e.cluster === cluster && e.projectPath === normalized && e.config === config);
 		if (existing) {
 			return this.update(existing.alias, { lastUsed: now });
 		}
 		const taken = new Set(this.list().filter(e => e.cluster === cluster).map(e => e.session));
-		const base = defaultSessionName(normalized);
+		const base = defaultSessionName(normalized, config);
 		let session = base;
 		for (let i = 2; taken.has(session); i++) {
 			session = `${base}-${i}`;
 		}
+		const project = path.posix.basename(normalized) || normalized;
 		const entry: Entry = {
-			cluster, projectPath: normalized, session, alias: hostAlias(cluster, session),
-			name: path.posix.basename(normalized) || normalized, lastUsed: now,
+			cluster, projectPath: normalized, config, session, alias: hostAlias(cluster, session),
+			name: config ? `${project} (${config})` : project, lastUsed: now,
 		};
 		await this.store.update(KEY, [...this.list(), entry]);
 		return entry;

@@ -11,7 +11,7 @@
 		},
 		"image": {
 			"type": "string",
-			"description": "Apptainer image: \"docker://…\", \"oras://…\", \"library://…\" or a path to a .sif file (relative paths are resolved against the .slurmtainer folder). Bare names such as \"ubuntu:24.04\" are treated as Docker images."
+			"description": "Apptainer image: \"docker://…\", \"oras://…\", \"library://…\" or a path to a .sif file (relative paths are resolved against the folder of this file). Bare names such as \"ubuntu:24.04\" are treated as Docker images."
 		},
 		"workspaceFolder": {
 			"type": "string",

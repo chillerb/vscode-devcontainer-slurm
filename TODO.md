@@ -31,6 +31,7 @@ extension-owned files in `~/.ssh/slurmtainer/`. The user's `~/.ssh/config` is on
 - [x] Packaging: publisher `chillerb`, MIT license, repository links, preview flag, `.vscodeignore`; CI and release workflow (VS Code Marketplace); `VSCE_PAT` secret added
 - [x] Manual end-to-end test on real Slurm clusters: the published extension starts and connects to containers on two clusters
 - [x] Rename the `slurm-devcontainer` stem to `slurmtainer` (config, folders, aliases, job/instance names, env vars; display name "Slurmtainer: Slurm Dev Containers"), clean break with a hint for old config locations and README upgrade steps
+- [x] Several configurations per project (`.slurmtainer/<name>/slurmtainer.json`, quick pick, one entry/session/job per configuration)
 
 ## Future
 

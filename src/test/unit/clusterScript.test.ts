@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
-	clusterPaths, jobScript, launchScript, logScript, parseConnectionInfo, parseMarkedLine, probeScript, sbatchDirectives, stopScript,
+	clusterPaths, jobScript, launchScript, logScript, parseConnectionInfo, parseMarkedLine, parseProbe, probeScript, sbatchDirectives, stopScript,
 } from '../../clusterScript';
 import { CONFIG_FILE, LEGACY_CONFIG_FILE, parseConfig } from '../../config';
 import { sshdStrategy } from '../../connection/sshd';
@@ -134,21 +134,42 @@ printf 'ARG:%s\\n' "$@"
 	test('probe reports home, env and config', () => {
 		fs.writeFileSync(path.join(project, CONFIG_FILE), '{ "image": "x" }');
 		const result = bash(`echo "motd noise"\n${probeScript(project)}`, { HOME: home, PATH: `${bin}:${process.env.PATH}`, MARKER_TEST: 'a\nb' });
-		const values = new Map(marked(result.stdout));
-		assert.strictEqual(values.get('home'), home);
-		assert.strictEqual(Buffer.from(values.get('config')!, 'base64').toString(), '{ "image": "x" }');
-		const env = Buffer.from(values.get('env')!, 'base64').toString().split('\0');
-		assert.ok(env.includes('MARKER_TEST=a\nb'));
-		assert.strictEqual(values.get('error'), 'sbatch not found on the login node');
-		assert.strictEqual(values.get('legacy-config'), undefined);
+		const values = marked(result.stdout);
+		const probe = parseProbe(values);
+		assert.strictEqual(probe.home, home);
+		assert.deepStrictEqual(probe.configs, [{ config: '', relPath: CONFIG_FILE, text: '{ "image": "x" }' }]);
+		assert.strictEqual(probe.env['MARKER_TEST'], 'a\nb');
+		assert.strictEqual(probe.missing, undefined);
+		assert.strictEqual(probe.legacy, undefined);
+		assert.strictEqual(new Map(values).get('error'), 'sbatch not found on the login node');
+	});
+
+	test('probe lists the default and the named configurations', () => {
+		for (const name of ['gpu', 'cpu only', '.hidden', 'empty']) {
+			fs.mkdirSync(path.join(project, '.slurmtainer', name));
+		}
+		fs.writeFileSync(path.join(project, CONFIG_FILE), 'root');
+		fs.writeFileSync(path.join(project, '.slurmtainer', 'gpu', 'slurmtainer.json'), 'gpu: "a:b"');
+		fs.writeFileSync(path.join(project, '.slurmtainer', 'cpu only', 'slurmtainer.json'), 'cpu');
+		fs.writeFileSync(path.join(project, '.slurmtainer', '.hidden', 'slurmtainer.json'), 'hidden');
+		const probe = parseProbe(marked(bash(probeScript(project), { HOME: home }).stdout));
+		assert.deepStrictEqual(probe.configs, [
+			{ config: '', relPath: '.slurmtainer/slurmtainer.json', text: 'root' },
+			{ config: 'cpu only', relPath: '.slurmtainer/cpu only/slurmtainer.json', text: 'cpu' },
+			{ config: 'gpu', relPath: '.slurmtainer/gpu/slurmtainer.json', text: 'gpu: "a:b"' },
+		]);
+
+		fs.rmSync(path.join(project, CONFIG_FILE));
+		assert.deepStrictEqual(parseProbe(marked(bash(probeScript(project), { HOME: home }).stdout)).configs.map(c => c.config), ['cpu only', 'gpu']);
 	});
 
 	test('probe reports a configuration in the location used before 0.4.0', () => {
 		fs.mkdirSync(path.join(project, '.slurm-devcontainer'));
 		fs.writeFileSync(path.join(project, LEGACY_CONFIG_FILE), '{ "image": "x" }');
-		const values = new Map(marked(bash(probeScript(project), { HOME: home }).stdout));
-		assert.strictEqual(values.get('config-missing'), path.join(project, CONFIG_FILE));
-		assert.strictEqual(values.get('legacy-config'), path.join(project, LEGACY_CONFIG_FILE));
+		const probe = parseProbe(marked(bash(probeScript(project), { HOME: home }).stdout));
+		assert.deepStrictEqual(probe.configs, []);
+		assert.strictEqual(probe.missing, path.join(project, '.slurmtainer'));
+		assert.strictEqual(probe.legacy, path.join(project, LEGACY_CONFIG_FILE));
 	});
 
 	test('launch submits a job and waits for the connection', () => {

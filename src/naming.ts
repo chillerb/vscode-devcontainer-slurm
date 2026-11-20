@@ -7,9 +7,13 @@ export function slug(value: string): string {
 	return value.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^[-.]+|[-.]+$/g, '') || 'project';
 }
 
-/** Default session name for a project folder on the cluster. */
-export function defaultSessionName(projectPath: string): string {
-	return slug(path.posix.basename(projectPath));
+/**
+ * Default session name for a project folder and configuration on the cluster: the folder name, plus the name
+ * of a named configuration (`.slurmtainer/<config>/slurmtainer.json`).
+ */
+export function defaultSessionName(projectPath: string, config = ''): string {
+	const base = slug(path.posix.basename(projectPath));
+	return config ? `${base}-${slug(config)}` : base;
 }
 
 /** SSH host alias of the container, e.g. `slurmtainer-marburg-my-project`. */

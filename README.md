@@ -54,7 +54,7 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 
 ## Configuration
 
-`.slurmtainer/slurmtainer.json` (JSON with comments) uses a subset of [devcontainer.json](https://containers.dev/implementors/json_reference/):
+`.slurmtainer/slurmtainer.json` (JSON with comments) uses a subset of [devcontainer.json](https://containers.dev/implementors/json_reference/). A project can also have several configurations, see [below](#several-configurations).
 
 ```jsonc
 {
@@ -71,7 +71,7 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 
 | Property | Description |
 |---|---|
-| `image` | **Required.** `docker://…`, `oras://…`, `library://…` or a path to a `.sif` file. Relative paths are resolved against `.slurmtainer/`. Bare names like `ubuntu:24.04` mean `docker://ubuntu:24.04`. |
+| `image` | **Required.** `docker://…`, `oras://…`, `library://…` or a path to a `.sif` file. Relative paths are resolved against the folder of the configuration file. Bare names like `ubuntu:24.04` mean `docker://ubuntu:24.04`. |
 | `workspaceFolder` | Where the project is mounted and opened. Default: `/workspaces/${localWorkspaceFolderBasename}`. |
 | `containerEnv`, `remoteEnv` | Environment variables inside the container. |
 | `mounts` | Extra bind mounts: `"source=…,target=…[,readonly]"` or `{ "source", "target", "readonly" }`. |
@@ -83,6 +83,19 @@ Many clusters meet these requirements, but some sites forbid user-level sshd pro
 Variables: `${localWorkspaceFolder}` and `${localWorkspaceFolderBasename}` refer to the project folder on the cluster. `${containerWorkspaceFolder}` is the folder inside the container. `${localEnv:VAR}` and `${localEnv:VAR:default}` read your environment on the login node.
 
 The project folder is mounted at `workspaceFolder`. The container image itself is read-only.
+
+### Several configurations
+
+Like Dev Containers, a project can have more than one configuration, for example one for CPU and one for GPU jobs:
+
+```
+.slurmtainer/
+├── slurmtainer.json          # default configuration (optional)
+├── gpu/slurmtainer.json      # named configuration "gpu"
+└── large-mem/slurmtainer.json
+```
+
+When there are several, **Open Folder in Container** and **Add Container...** ask which one to use. The list shows each configuration's `"name"`. Each configuration is a separate dev container with its own job, host entry and persistent workdir; **Connect to Container...** lists them as `my-project (gpu)`. Relative image paths are resolved against the folder of the configuration file.
 
 ## Isolation
 
@@ -143,7 +156,7 @@ Set `"runArgs": []` (plus any flags you need, without `--containall`) and `"pers
 ## Files written by the extension
 
 **On your computer**
-- `~/.ssh/slurmtainer/config` holds one `Host slurmtainer-<cluster>-<project>` entry per dev container. The compute node and port are updated on every connect.
+- `~/.ssh/slurmtainer/config` holds one `Host slurmtainer-<cluster>-<project>[-<config>]` entry per dev container. The compute node and port are updated on every connect.
 - `~/.ssh/slurmtainer/id_ed25519` is a key pair used only to log into the containers' sshd.
 - `~/.ssh/slurmtainer/known_hosts` holds the pinned host key of the job sshd, one per cluster. It is fetched over your trusted login connection.
 - `~/.ssh/config` gets the line `Include ~/.ssh/slurmtainer/config` at the top, **only if you click "Add Line"**. Remote-SSH can only find the container hosts through this line. No other change is ever made to your SSH config.

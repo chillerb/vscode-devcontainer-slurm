@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { ConfigError, configTemplate, parseConfig, resolveImage, substitute } from '../../config';
+import { ConfigError, configDisplayName, configFromPath, configPath, configTemplate, parseConfig, resolveImage, substitute } from '../../config';
 
 const vars = { localWorkspaceFolder: '/home/jdoe/projects/my-project', localEnv: { USER: 'jdoe', HOME: '/home/jdoe' } };
 
@@ -112,5 +112,25 @@ suite('config', () => {
 		const config = parseConfig(configTemplate('demo'), vars);
 		assert.strictEqual(config.name, 'demo');
 		assert.strictEqual(config.workspaceFolder, '/workspaces/my-project');
+	});
+
+	test('configuration paths', () => {
+		assert.strictEqual(configPath(''), '.slurmtainer/slurmtainer.json');
+		assert.strictEqual(configPath('gpu'), '.slurmtainer/gpu/slurmtainer.json');
+		assert.strictEqual(configFromPath('.slurmtainer/slurmtainer.json'), '');
+		assert.strictEqual(configFromPath('.slurmtainer/gpu/slurmtainer.json'), 'gpu');
+		assert.strictEqual(configFromPath('.slurmtainer/a/b/slurmtainer.json'), undefined);
+		assert.strictEqual(configFromPath('other.json'), undefined);
+		assert.strictEqual(configDisplayName('// c\n{ "name": "GPU", }'), 'GPU');
+		assert.strictEqual(configDisplayName('{ "name": 1 }'), undefined);
+		assert.strictEqual(configDisplayName('not json'), undefined);
+	});
+
+	test('named configurations: error prefix and relative images', () => {
+		assert.throws(() => parseConfig('{}', vars, '.slurmtainer/gpu/slurmtainer.json'), /^ConfigError: \.slurmtainer\/gpu\/slurmtainer\.json: "image" is required$/);
+		assert.throws(() => parseConfig('{}', vars), /^ConfigError: \.slurmtainer\/slurmtainer\.json: "image" is required$/);
+		const config = parseConfig('{ "image": "../base.sif" }', vars, '.slurmtainer/gpu/slurmtainer.json');
+		assert.strictEqual(config.image, '/home/jdoe/projects/my-project/.slurmtainer/base.sif');
+		assert.strictEqual(resolveImage('img.sif', '/p', '.slurmtainer/gpu/slurmtainer.json'), '/p/.slurmtainer/gpu/img.sif');
 	});
 });

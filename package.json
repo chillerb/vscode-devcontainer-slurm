@@ -44,13 +44,17 @@
       {
         "id": "jsonc",
         "filenamePatterns": [
-          "**/.slurmtainer/slurmtainer.json"
+          "**/.slurmtainer/slurmtainer.json",
+          "**/.slurmtainer/*/slurmtainer.json"
         ]
       }
     ],
     "jsonValidation": [
       {
-        "fileMatch": "**/.slurmtainer/slurmtainer.json",
+        "fileMatch": [
+          "**/.slurmtainer/slurmtainer.json",
+          "**/.slurmtainer/*/slurmtainer.json"
+        ],
         "url": "./schemas/slurmtainer.schema.json"
       }
     ],

@@ -1,4 +1,4 @@
-import { CONFIG_FILE, DevcontainerConfig, LEGACY_CONFIG_FILE } from './config';
+import { CONFIG_DIR, CONFIG_FILE, CONFIG_NAME, configFromPath, DevcontainerConfig, LEGACY_CONFIG_FILE } from './config';
 import { ConnectionInfo, ConnectionStrategy, JobContext } from './connection/types';
 import { PREFIX } from './naming';
 import { shellQuote, writeFileSnippet } from './shell';
@@ -51,21 +51,84 @@ main
 `;
 }
 
-/** Reads the user's environment and the project config on the login node. Prints home, user, env and config (base64). */
+/**
+ * Reads the user's environment and the project's configurations on the login node: the default
+ * `.slurmtainer/slurmtainer.json` and the named `.slurmtainer/<name>/slurmtainer.json` (one level, like Dev
+ * Containers). Prints `home`, `user`, `env` (base64) and one `config=<relative path>:<base64>` per file, or
+ * `config-missing` (plus `legacy-config` for a file at the location used before 0.4.0).
+ */
 export function probeScript(projectPath: string): string {
 	return wrap(`set -u
 say "home=$HOME"
 say "user=$(id -un)"
 say "env=$(env -0 | base64 | tr -d '\\n')"
-f=${shellQuote(`${projectPath}/${CONFIG_FILE}`)}
-if [ -r "$f" ]; then
-	say "config=$(base64 < "$f" | tr -d '\\n')"
-else
-	say "config-missing=$f"
-	legacy=${shellQuote(`${projectPath}/${LEGACY_CONFIG_FILE}`)}
+p=${shellQuote(projectPath)}
+found=
+for f in "$p/"${shellQuote(CONFIG_FILE)} "$p/"${shellQuote(CONFIG_DIR)}/*/${shellQuote(CONFIG_NAME)}; do
+	[ -f "$f" ] && [ -r "$f" ] || continue
+	found=1
+	say "config=\${f#"$p/"}:$(base64 < "$f" | tr -d '\\n')"
+done
+if [ -z "$found" ]; then
+	say "config-missing=$p/"${shellQuote(CONFIG_DIR)}
+	legacy="$p/"${shellQuote(LEGACY_CONFIG_FILE)}
 	[ -r "$legacy" ] && say "legacy-config=$legacy"
 fi
 command -v sbatch >/dev/null 2>&1 || say "error=sbatch not found on the login node"`);
+}
+
+/** A configuration file found by {@link probeScript}. */
+export interface ProbedConfig {
+	/** Folder name in `.slurmtainer/`; `''` for the default configuration. */
+	config: string;
+	/** Path relative to the project, e.g. `.slurmtainer/gpu/slurmtainer.json`. */
+	relPath: string;
+	text: string;
+}
+
+export interface ProbeResult {
+	home: string;
+	user: string;
+	env: Record<string, string>;
+	/** Default configuration first, then the named ones in the order the shell listed them (sorted). */
+	configs: ProbedConfig[];
+	/** Set when there is no configuration: the folder that was searched. */
+	missing?: string;
+	/** Set when there is no configuration but one at the location used before 0.4.0. */
+	legacy?: string;
+}
+
+/** Decodes the output of {@link probeScript}. */
+export function parseProbe(values: [string, string][]): ProbeResult {
+	const decode = (b64: string) => Buffer.from(b64, 'base64').toString('utf8');
+	const result: ProbeResult = { home: '', user: '', env: {}, configs: [] };
+	for (const [key, value] of values) {
+		if (key === 'home') {
+			result.home = value;
+		} else if (key === 'user') {
+			result.user = value;
+		} else if (key === 'env') {
+			for (const pair of decode(value).split('\0')) {
+				const eq = pair.indexOf('=');
+				if (eq > 0) {
+					result.env[pair.slice(0, eq)] = pair.slice(eq + 1);
+				}
+			}
+		} else if (key === 'config') {
+			// base64 contains no ':', so the last one separates path and content.
+			const sep = value.lastIndexOf(':');
+			const relPath = value.slice(0, sep);
+			const config = configFromPath(relPath);
+			if (sep > 0 && config !== undefined) {
+				result.configs.push({ config, relPath, text: decode(value.slice(sep + 1)) });
+			}
+		} else if (key === 'config-missing') {
+			result.missing = value;
+		} else if (key === 'legacy-config') {
+			result.legacy = value;
+		}
+	}
+	return result;
 }
 
 export interface LaunchOptions {

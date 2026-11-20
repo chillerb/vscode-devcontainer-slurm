@@ -69,7 +69,7 @@ All scripts are generated in `src/clusterScript.ts`:
 
 | Script | Used by | Purpose |
 |---|---|---|
-| `probeScript` | Connect | Reads the user, `$HOME`, the environment and the config file |
+| `probeScript` | Open, Add, Connect | Reads the user, `$HOME`, the environment and all configuration files |
 | `launchScript` | Connect | Reuses or submits the job and waits until it is reachable |
 | `stopScript` | Stop | `squeue` for the session's active jobs, then `scancel`, prints `stopped=<ids>` |
 | `logScript` | Show Job Log | Prints `job.log` as `log=` lines |
@@ -86,10 +86,16 @@ Then `probeScript` runs on the login node and reports:
 | `home` | `$HOME`, used to build absolute cluster paths |
 | `user` | `id -un` |
 | `env` | `env -0 \| base64`: the full login-node environment, NUL-separated and base64-encoded so newlines and special characters survive |
-| `config` | `.slurmtainer/slurmtainer.json`, base64-encoded; or `config-missing=<path>` |
+| `config` | one line per configuration file, `<relative path>:<base64 content>`: `.slurmtainer/slurmtainer.json` and every `.slurmtainer/<name>/slurmtainer.json`; or `config-missing=<folder>` (plus `legacy-config=<path>` for a file at the location used before 0.4.0) |
 | `error` | only if `sbatch` is not on the `PATH` |
 
-`parseConfig` (`src/config.ts`) then:
+**Several configurations:** like Dev Containers, a project can have a default configuration and named ones
+in subfolders (one level deep). **Open Folder in Container** and **Add Container...** run the probe first and
+show a quick pick if there are several. Each configuration is a separate dev container with its own entry,
+job and host alias; the entry remembers the configuration folder (`''` for the default one), so
+**Connect to Container...** doesn't ask again.
+
+`parseConfig` (`src/config.ts`) then parses the chosen configuration:
 
 - parses the config as JSONC, so comments and trailing commas are allowed;
 - substitutes `${localWorkspaceFolder}`, `${localWorkspaceFolderBasename}`, `${containerWorkspaceFolder}`
@@ -101,12 +107,12 @@ Then `probeScript` runs on the login node and reports:
   - `apptainer.binary`: `apptainer`
   - `connection.sshdPath`: `/usr/sbin/sshd`
 - turns `image` into a full reference: a bare name like `ubuntu:24.04` becomes `docker://ubuntu:24.04`, and
-  a relative path or `*.sif` is resolved against `.slurmtainer/`;
+  a relative path or `*.sif` is resolved against the configuration file's folder;
 - rejects invalid settings, such as a relative `workspaceFolder` or `--workdir` in `runArgs` while
   `persistentWorkdir` is on.
 
-The session name is the slugified project folder name, with `-2`, `-3`… added if the name is already taken
-on that cluster. It determines:
+The session name is the slugified project folder name, plus `-<config>` for a named configuration, with
+`-2`, `-3`… added if the name is already taken on that cluster. It determines:
 
 - the Slurm job name: `slurmtainer-<session>`;
 - the session directory: `~/.slurmtainer/sessions/<session>`;
