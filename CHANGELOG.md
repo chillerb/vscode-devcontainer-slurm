@@ -4,7 +4,7 @@ All notable changes to the "remote-slurm-containers" extension will be documente
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## [v0.4.0] - 2026-11-20
 
 ### Added
 
